@@ -1,0 +1,108 @@
+/* Mise en page propre à grist-management. Les composants viennent du DSFR. */
+body { background: var(--background-alt-grey); color: var(--text-default-grey); min-height: 100vh; display: flex; flex-direction: column; }
+.mg-marge { padding-left: 1.5rem; padding-right: 1.5rem; }
+#mg-app { flex: 1; padding-top: 1rem; padding-bottom: 2rem; }
+#mg-app:focus { outline: none; }
+.mg-evitement { position: absolute; left: -999px; }
+.mg-evitement:focus { left: 1rem; top: .5rem; z-index: 10; background: var(--background-default-grey); }
+.mg-alerte { margin-bottom: 1rem; }
+.mg-titre-ligne { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem; }
+.mg-gris, .mg-compte { color: var(--text-mention-grey); font-weight: 400; }
+.mg-vide { color: var(--text-mention-grey); font-size: .875rem; }
+.mg-texte-erreur { color: var(--text-default-error); }
+.mg-deux { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 0 1rem; }
+.mg-trois { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 0 1rem; }
+
+/* Barre des écrans */
+.mg-barre { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; margin-bottom: 1rem; }
+.mg-ecrans { flex: 1; }
+.mg-ecrans .fr-btns-group { margin: 0; }
+.mg-horloge { margin: 0; color: var(--text-mention-grey); font-variant-numeric: tabular-nums; text-transform: capitalize; }
+
+/* Grille des zones : 12 colonnes */
+.mg-grille { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 1rem; }
+.mg-zone { grid-column: span var(--mg-largeur, 12); background: var(--background-default-grey); border: 1px solid var(--border-default-grey); border-top: 4px solid var(--border-plain-blue-france); padding: 1rem 1.25rem; min-width: 0; }
+.mg-zone--tableau { background: transparent; border: 0; padding: 0; }
+.mg-zone__titre { font-size: 1.125rem; margin-bottom: .75rem; }
+@media (max-width: 62em) { .mg-zone { grid-column: 1 / -1; } }
+
+/* Statuts : toujours une couleur ET un texte ou un symbole */
+.mg-statut--vert { --mg-fond: var(--background-flat-success); }
+.mg-statut--orange { --mg-fond: var(--background-flat-warning); }
+.mg-statut--rouge { --mg-fond: var(--background-flat-error); }
+.mg-statut-bord--rouge { border-top: 4px solid var(--border-plain-error); }
+.mg-statut-bord--orange { border-top: 4px solid var(--border-plain-warning); }
+
+/* Chiffres clés */
+.mg-chiffres { display: flex; flex-wrap: wrap; gap: 1rem; list-style: none; margin: 0; padding: 0; }
+.mg-chiffre { flex: 1 1 10rem; padding: .75rem 1rem; border-left: 6px solid var(--mg-fond, var(--border-default-grey)); background: var(--background-alt-grey); }
+.mg-chiffre__n { display: block; font-size: 2rem; font-weight: 700; line-height: 1.1; color: var(--text-title-grey); font-variant-numeric: tabular-nums; }
+.mg-chiffre__lib { font-size: .875rem; }
+
+/* Météo */
+.mg-meteo-defil { overflow-x: auto; }
+.mg-meteo { border-collapse: separate; border-spacing: 3px; width: 100%; }
+.mg-meteo th { font-size: .75rem; font-weight: 700; text-align: center; padding: .25rem; white-space: nowrap; }
+.mg-meteo th[scope=row] { text-align: left; font-size: .875rem; }
+.mg-meteo__case { text-align: center; font-weight: 700; height: 2.25rem; min-width: 2.25rem; background: var(--mg-fond, var(--background-contrast-grey)); color: #fff; }
+.mg-meteo__case:not([class*=mg-statut]) { color: var(--text-mention-grey); }
+th.mg-meteo__auj { color: var(--text-title-blue-france); }
+td.mg-meteo__auj { outline: 2px solid var(--border-plain-blue-france); outline-offset: 1px; }
+.mg-legende { font-size: .75rem; margin: .5rem 0 0; display: flex; flex-wrap: wrap; gap: 1rem; }
+.mg-pastille { display: inline-block; width: 1.25rem; height: 1.25rem; line-height: 1.25rem; text-align: center; background: var(--mg-fond); color: #fff; font-weight: 700; }
+.mg-commentaires { list-style: none; padding: 0; margin: .75rem 0 0; font-size: .875rem; }
+.mg-commentaires li { padding: .25rem 0; }
+.mg-meteo-saisie { margin-bottom: .5rem; }
+.mg-saisie summary { cursor: pointer; color: var(--text-action-high-blue-france); }
+
+/* Signalements */
+.mg-signalements { list-style: none; padding: 0; margin: 0; }
+.mg-signalement { border-left: 4px solid var(--border-plain-info); padding: .5rem .75rem; margin-bottom: .75rem; background: var(--background-alt-grey); }
+.mg-gravite--error { border-left-color: var(--border-plain-error); }
+.mg-gravite--warning { border-left-color: var(--border-plain-warning); }
+.mg-signalement__titre { font-weight: 700; margin-bottom: .25rem; }
+.mg-signalement__meta, .mg-signalement__info { font-size: .875rem; margin-bottom: .25rem; }
+.mg-signalement .fr-btns-group { margin: 0; }
+
+/* Actions */
+.mg-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1rem; }
+.mg-actions__col { background: var(--background-alt-grey); padding: .75rem 1rem; }
+.mg-actions__liste { list-style: none; padding: 0; margin: 0; }
+.mg-actions__liste li { padding: .5rem 0; border-bottom: 1px solid var(--border-default-grey); }
+.mg-action__titre { font-weight: 700; margin: 0; }
+.mg-action__meta { font-size: .8125rem; margin: 0 0 .25rem; color: var(--text-mention-grey); }
+.mg-select-etat { margin: 0; max-width: 12rem; }
+
+/* Réunion */
+.mg-reunion__titre { font-weight: 700; font-size: 1.125rem; margin-bottom: .25rem; }
+.mg-reunion__quand { color: var(--text-mention-grey); }
+.mg-odj { padding-left: 0; list-style: none; }
+.mg-odj li { padding: .25rem 0; border-bottom: 1px solid var(--border-default-grey); }
+.mg-odj li::before { content: none; }
+.mg-odj__heure { font-weight: 700; color: var(--text-title-blue-france); display: inline-block; min-width: 3rem; }
+
+/* Projets */
+.mg-kanban { display: grid; grid-template-columns: repeat(var(--mg-colonnes), minmax(8rem, 1fr)); gap: .75rem; overflow-x: auto; }
+.mg-kanban__col { background: var(--background-alt-grey); padding: .5rem; }
+.mg-kanban__titre { font-size: .875rem; margin-bottom: .5rem; }
+.mg-kanban ul { list-style: none; padding: 0; margin: 0; }
+.mg-kanban__carte { background: var(--background-default-grey); border: 1px solid var(--border-default-grey); padding: .5rem; margin-bottom: .5rem; font-size: .875rem; }
+.mg-kanban__carte--error { border-left: 4px solid var(--border-plain-error); }
+.mg-kanban__carte--warning { border-left: 4px solid var(--border-plain-warning); }
+.mg-texte { font-size: 1.125rem; }
+
+/* Réglages */
+.mg-reglage-ecran { border: 1px solid var(--border-default-grey); background: var(--background-default-grey); padding: 1rem; margin-bottom: 1rem; }
+.mg-reglage-zones { padding-left: 1.25rem; }
+.mg-reglage-zone { border-top: 1px solid var(--border-default-grey); padding-top: .75rem; margin-bottom: .75rem; }
+.mg-reglage-outils { display: flex; gap: .5rem; align-items: flex-end; }
+.mg-pied { padding-top: .75rem; padding-bottom: .75rem; border-top: 1px solid var(--border-default-grey); }
+
+/* Mode affichage : lisible à distance, sans commandes de saisie */
+.mg-affichage { font-size: 112.5%; cursor: none; }
+.mg-affichage #entete, .mg-affichage #pied, .mg-affichage .mg-masque-affichage, .mg-affichage .mg-saisie, .mg-affichage .tb-outils, .mg-affichage .tb-donnees, .mg-affichage .tb-filtres { display: none !important; }
+.mg-affichage #mg-app { padding-top: .5rem; }
+.mg-affichage .mg-chiffre__n { font-size: 2.75rem; }
+.mg-affichage .mg-meteo__case { height: 2.75rem; font-size: 1.25rem; }
+.mg-affichage .mg-bouton-affichage { cursor: pointer; }
+.mg-affichage .mg-horloge { font-size: 1.25rem; color: var(--text-title-grey); }
