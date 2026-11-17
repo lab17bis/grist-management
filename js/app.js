@@ -21,6 +21,11 @@
     { nom: 'À surveiller', code: 'orange', badge: 'warning', symbole: '!' },
     { nom: 'Critique', code: 'rouge', badge: 'error', symbole: '✕' }
   ];
+  // Couleurs des choix dans Grist (reprises par grist-graphique) : tokens DSFR « flat », texte blanc.
+  var COULEURS_GRIST = {
+    'Conforme': { fillColor: '#18753C', textColor: '#FFFFFF' }, 'À surveiller': { fillColor: '#B34000', textColor: '#FFFFFF' }, 'Critique': { fillColor: '#CE0500', textColor: '#FFFFFF' },
+    'Bloquante': { fillColor: '#CE0500', textColor: '#FFFFFF' }, 'Majeure': { fillColor: '#B34000', textColor: '#FFFFFF' }, 'Mineure': { fillColor: '#0063CB', textColor: '#FFFFFF' }
+  };
   var GRAVITES = ['Bloquante', 'Majeure', 'Mineure'];
   var COULEUR_GRAVITE = { 'Bloquante': 'error', 'Majeure': 'warning', 'Mineure': 'info' };
   var STATUTS_SIGNALEMENT = ['Ouvert', 'En cours', 'Résolu'];
@@ -486,9 +491,9 @@
   function choix(l) { return { type: 'Choice', widgetOptions: JSON.stringify({ choices: l }) }; }
   function installer(exemple) {
     var sch = {
-      Meteo: [['Date', { type: 'Date' }], ['Rubrique', choix(C.rubriques)], ['Statut', choix(STATUTS_METEO.map(function (s) { return s.nom; }))],
+      Meteo: [['Date', { type: 'Date' }], ['Rubrique', choix(C.rubriques)], ['Statut', { type: 'Choice', widgetOptions: JSON.stringify({ choices: STATUTS_METEO.map(function (s) { return s.nom; }), choiceOptions: COULEURS_GRIST }) }],
         ['Commentaire', { type: 'Text' }], ['Saisi_par', { type: 'Text', isFormula: false, formula: 'user.Name' }], [NOM_COLONNE_CONFIG, { type: 'Text' }]],
-      Signalements: [['Titre', { type: 'Text' }], ['Description', { type: 'Text' }], ['Rubrique', choix(C.rubriques)], ['Gravite', choix(GRAVITES)],
+      Signalements: [['Titre', { type: 'Text' }], ['Description', { type: 'Text' }], ['Rubrique', choix(C.rubriques)], ['Gravite', { type: 'Choice', widgetOptions: JSON.stringify({ choices: GRAVITES, choiceOptions: COULEURS_GRIST }) }],
         ['Statut', choix(STATUTS_SIGNALEMENT)], ['Escalade', choix(C.escalade)], ['Responsable', { type: 'Text' }], ['Resolution', { type: 'Text' }],
         ['Signale_par', { type: 'Text', isFormula: false, formula: 'user.Name' }], ['Signale_le', { type: 'DateTime:Europe/Paris', isFormula: false, formula: 'NOW()' }],
         ['Resolu_le', { type: 'DateTime:Europe/Paris' }]]
