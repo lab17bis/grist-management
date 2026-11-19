@@ -6,7 +6,7 @@ Cet outil **assemble** les autres outils de la famille au lieu de les refaire. I
 
 Tout se règle dans Grist, sans toucher au code. Le dépôt ne contient que le code : aucune donnée réelle.
 
-Démonstration avec des données fictives (rien n'est enregistré) : <https://lab17bis.github.io/grist-management/>
+Démonstration avec des données fictives (rien n'est enregistré) : <https://lab17bis.github.io/grist-management/v1/>
 
 ## À quoi ça sert
 
@@ -30,7 +30,7 @@ Les statuts ne reposent jamais sur la couleur seule : chaque case porte un symbo
 ## Le brancher en 3 minutes
 
 1. **Ouvrir le document Grist de l'équipe**, de préférence celui qui contient déjà les tables de grist-reunion, grist-projet ou un tableau de bord grist-graphique. Un document vide convient aussi.
-2. **Ajouter le widget** : *Ajouter › Ajouter une page › Personnalisé*, sur n'importe quelle table. Choisissez *URL personnalisée*, saisissez `https://lab17bis.github.io/grist-management/` et donnez l'**accès complet au document**.
+2. **Ajouter le widget** : *Ajouter › Ajouter une page › Personnalisé*, sur n'importe quelle table. Choisissez *URL personnalisée*, saisissez `https://lab17bis.github.io/grist-management/v1/` et donnez l'**accès complet au document**.
 3. **Installer** : le widget propose *Créer les tables* (`Meteo` et `Signalements`), ou *avec un exemple fictif* pour essayer. Les tables existantes ne sont pas modifiées. À faire par un propriétaire du document.
 
 Les écrans se composent alors automatiquement selon ce que contient le document. Pour ajouter un outil plus tard, il suffit d'installer son widget dans le même document : grist-reunion crée lui aussi ses tables.
@@ -61,10 +61,12 @@ Pour signaler un problème sans être connecté au document, branchez [grist-que
 ## Le reprendre et l'adapter
 
 - **L'utiliser tel quel** : ajoutez le widget dans Grist.
-- **L'héberger chez vous** : le widget charge les modules de grist-graphique depuis le dossier voisin (`../grist-graphique/`). Hébergez les deux dépôts côte à côte, comme sur `lab17bis.github.io`, ou changez ces adresses dans `index.html`.
+- **L'héberger chez vous** : le widget charge les modules de grist-graphique depuis le dossier voisin (`../grist-graphique/` pour la version en cours, `../../grist-graphique/v1/` pour la version stable). Hébergez les deux dépôts côte à côte, comme sur `lab17bis.github.io`, ou changez ces adresses dans `index.html`.
 
 | Dossier ou fichier | Rôle |
 | --- | --- |
+| `v1/` | Version stable figée, servie à l'adresse `…/v1/`. Ne pas modifier à la main. |
+| `outils/figer-version.sh` | Copie la version en cours dans `vN/`. |
 | `index.html`, `js/app.js`, `css/app.css` | L'application : zones, écrans, mode affichage, installation, réglages |
 | `commun/` | En-tête et pied de page configurables, communs aux outils `grist-*` |
 | `exemples/demo.json` | Jeu d'exemple inventé (dates relatives, « J-3 ») |
@@ -82,6 +84,26 @@ Pour signaler un problème sans être connecté au document, branchez [grist-que
 - Fonctionne uniquement dans Grist. Le plein écran peut être refusé par le navigateur à l'intérieur de Grist : utilisez alors le plein écran du navigateur (F11).
 - Les responsables d'actions de grist-reunion sont des textes libres, ceux de grist-projet des personnes de l'annuaire : l'outil les affiche tels quels.
 - Aucun audit RGAA n'a été mené.
+
+## Version stable et version en cours
+
+Dans Grist, utilisez l'adresse de la **version stable** : `https://lab17bis.github.io/grist-management/v1/`. Elle ne change que pour corriger un défaut, sans toucher aux tables ni aux réglages. Une évolution qui les modifie paraît sous une nouvelle adresse (`v2/`) : les documents déjà en service restent sur `v1/` tant que vous ne changez pas l'adresse du widget.
+
+L'adresse sans numéro (`https://lab17bis.github.io/grist-management/`) suit la version en cours de développement. Elle sert à essayer les nouveautés ; ne l'utilisez pas pour un document en service.
+
+Pour figer une nouvelle version stable après des tests réussis : `sh outils/figer-version.sh 1` (ou `2` pour une version qui change les tables), puis publiez le dépôt.
+
+## Données partagées avec les autres outils
+
+Plusieurs outils de la même famille peuvent travailler dans un même document Grist. Ils suivent une règle commune pour ne pas dupliquer les données :
+
+- **Une seule table `Personnes`** par document. Colonne commune : `Nom`. Colonnes facultatives reconnues par tous : `Email` et `Structure` (référence à `Structures`). Un outil lit cette table si elle existe et la crée seulement si elle manque. Il n'y ajoute que ses propres colonnes.
+- **Une seule table `Structures`** pour les équipes, services ou établissements : `Nom`, `Sigle`, `Type`, `Parent` (structure de rattachement).
+- **Aucun outil ne supprime ni ne renomme** une table ou une colonne qu'il n'a pas créée.
+- **Les autres tables portent des noms propres à chaque outil**, pour éviter les collisions (par exemple `Actions` pour grist-projet, `Actions_reunion` pour grist-reunion). Les réglages sont rangés dans la description d'une colonne technique propre à l'outil (`Config_…`).
+- **Identifier la personne connectée** : un widget ne connaît pas l'adresse de la personne connectée. Les colonnes « créé par » utilisent une formule `user.Email` calculée à la création. Seul un outil qui doit relier la personne connectée à sa fiche crée la table `Comptes`.
+
+Ce que fait cet outil : Il ne crée pas de table de personnes. Il lit `Personnes` pour afficher les responsables des actions de projet.
 
 ## Espaces clés en main
 

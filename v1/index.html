@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="fr" data-fr-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Management visuel</title>
+  <link rel="stylesheet" href="vendor/dsfr/dsfr.min.css">
+  <link rel="stylesheet" href="vendor/dsfr/utility/icons/icons.min.css">
+  <link rel="stylesheet" href="commun/page.css?v=1">
+  <!-- Modules de grist-graphique, servis par son propre site : un seul code pour les deux outils. -->
+  <link rel="stylesheet" href="../../grist-graphique/v1/css/tableau.css?v=3">
+  <link rel="stylesheet" href="css/app.css?v=2">
+  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+</head>
+<body>
+  <a class="fr-link mg-evitement" href="#mg-app">Aller au contenu</a>
+  <div id="entete" class="mg-masque-affichage"></div>
+  <div id="mg-demo" class="fr-notice fr-notice--info mg-masque-affichage" hidden>
+    <div class="mg-marge"><div class="fr-notice__body"><p class="fr-notice__title">Mode démonstration : données fictives, rien n'est enregistré.</p></div></div>
+  </div>
+  <main id="mg-app" class="mg-marge" tabindex="-1"><p>Chargement…</p></main>
+  <div id="pied" class="mg-masque-affichage"></div>
+  <div class="mg-pied mg-marge mg-masque-affichage"><a class="fr-link fr-text--sm" href="#reglages">Réglages de l'espace</a></div>
+
+  <script src="../../grist-graphique/v1/vendor/echarts/echarts.min.js"></script>
+  <script src="../../grist-graphique/v1/vendor/echarts/langFR.js"></script>
+  <script src="../../grist-graphique/v1/js/calcul.js?v=2"></script>
+  <script src="../../grist-graphique/v1/js/donnees.js?v=2"></script>
+  <script src="../../grist-graphique/v1/js/tableau.js?v=4"></script>
+  <script src="commun/page-dsfr.js?v=2"></script>
+  <script src="commun/page-editeur.js?v=1"></script>
+  <script src="js/app.js?v=2"></script>
+</body>
+</html>
