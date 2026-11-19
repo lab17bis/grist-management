@@ -1,6 +1,6 @@
 # grist-management
 
-> **Widget-outil pour Grist, clé en main.** Il transforme un document Grist en espace de management visuel d'équipe, au Système de design de l'État (DSFR) : météo du jour, signalements de problèmes avec escalade, actions à suivre, prochaine réunion, projets par phase et tableaux de bord, sur un écran de service qui défile tout seul.
+> **Widget-outil pour Grist, clé en main.** Il ajoute à un document Grist un écran de management visuel d'équipe, au Système de design de l'État (DSFR) : météo du jour, signalements de problèmes avec escalade, actions à suivre, prochaine réunion, projets par phase et tableaux de bord, sur un écran de service qui défile tout seul.
 
 Cet outil **assemble** les autres outils de la famille au lieu de les refaire. Il ne redessine ni graphiques, ni réunions, ni projets : il affiche ce que produisent [grist-graphique](https://github.com/lab17bis/grist-graphique), [grist-reunion](https://github.com/lab17bis/grist-reunion) et [grist-projet](https://github.com/lab17bis/grist-projet) quand leurs tables sont dans le même document. Il ajoute seulement ce qui leur manquait pour le management visuel.
 
@@ -82,6 +82,12 @@ Pour signaler un problème sans être connecté au document, branchez [grist-que
 - Fonctionne uniquement dans Grist. Le plein écran peut être refusé par le navigateur à l'intérieur de Grist : utilisez alors le plein écran du navigateur (F11).
 - Les responsables d'actions de grist-reunion sont des textes libres, ceux de grist-projet des personnes de l'annuaire : l'outil les affiche tels quels.
 - Aucun audit RGAA n'a été mené.
+
+## Espaces clés en main
+
+Ce widget est déjà assemblé, avec d'autres, dans des **espaces** : des documents Grist complets à importer en une fois, vides ou avec un exemple fictif.
+
+- [espace-pilotage](https://github.com/lab17bis/espace-pilotage) : piloter une équipe : management visuel, réunions, projets et indicateurs.
 
 ## Autres outils de la même famille
 
