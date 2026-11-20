@@ -507,10 +507,12 @@
         var auj = aujourdhui(), ex = [];
         ['Meteo', 'Signalements'].forEach(function (t) {
           var lignes = j.tables[t], cols = {};
-          sch[t].forEach(function (c) { if (c[0] !== NOM_COLONNE_CONFIG && c[0] !== 'Saisi_par') cols[c[0]] = []; });
+          sch[t].forEach(function (c) { if (c[0] !== NOM_COLONNE_CONFIG) cols[c[0]] = []; });
           lignes.forEach(function (l) {
             Object.keys(cols).forEach(function (k) {
               var v = l[k];
+              // Sans valeur, Grist inscrirait le nom de la personne qui installe : on garde l'exemple anonyme.
+              if ((k === 'Saisi_par' || k === 'Signale_par') && !v) v = 'Exemple fictif';
               if (typeof v === 'string' && /^J[+-]\d+$/.test(v)) v = auj + 86400 * (+v.slice(1));
               cols[k].push(v === undefined ? null : v);
             });
