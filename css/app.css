@@ -106,3 +106,7 @@ td.mg-meteo__auj { outline: 2px solid var(--border-plain-blue-france); outline-o
 .mg-affichage .mg-meteo__case { height: 2.75rem; font-size: 1.25rem; }
 .mg-affichage .mg-bouton-affichage { cursor: pointer; }
 .mg-affichage .mg-horloge { font-size: 1.25rem; color: var(--text-title-grey); }
+
+/* Coque à onglets (ajout 2026-11-24) */
+#mg-coque #mg-app { padding-left: 0; padding-right: 0; }
+.mg-affichage .cl-barre { display: none !important; }

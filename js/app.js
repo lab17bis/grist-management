@@ -460,7 +460,7 @@
   }
 
   function rendre() {
-    if (location.hash === '#reglages') { app.innerHTML = vueReglages(); monterReglagesPage(); return; }
+    monterCoque();
     if (!DEMO && (!aTable('Meteo') || !aTable('Signalements'))) { app.innerHTML = vueInstallation(); return; }
     var ec = ecrans();
     if (etat.ecran >= ec.length) etat.ecran = 0;
@@ -535,13 +535,10 @@
   // ---------------------------------------------------------------------------
 
   var brouillon = null;
-  var configLab = null, ongletReglages = 'reglages';
+  var ecoute = document.getElementById('mg-coque') || app;
+  var configLab = null;
   function ouvrirBrouillon() {
     if (!brouillon) { brouillon = JSON.parse(JSON.stringify(reglages || {})); if (!Array.isArray(brouillon.ecrans) || !brouillon.ecrans.length) brouillon.ecrans = JSON.parse(JSON.stringify(ecransAuto())); }
-  }
-  function vueReglages() {
-    ouvrirBrouillon();
-    return '<div class="mg-titre-ligne"><h1 class="fr-h3">Configuration de l\'espace</h1><a class="fr-link fr-icon-arrow-left-line fr-link--icon-left" href="#">Retour</a></div>' + blocAlerte() + '<div id="mg-config"></div>';
   }
   function reglagesPropres() {
     var b = brouillon;
@@ -592,22 +589,23 @@
   }
   function chemin(o, p) { return p.split('.').reduce(function (x, k) { return x == null ? x : x[k]; }, o); }
   function poser(o, p, v) { var k = p.split('.'), d = k.pop(); chemin(o, k.join('.'))[d] = v; }
-  function monterReglagesPage() {
-    var z = document.getElementById('mg-config');
-    if (!z || !window.ConfigLab || !brouillon) return;
+  function monterCoque() {
+    var z = document.getElementById('mg-coque');
+    if (configLab || !z || !window.ConfigLab) return;
+    ouvrirBrouillon();
     brouillon.page = brouillon.page || { marque: '', titre: 'Management visuel', pied: { accessibilite: '' } };
     configLab = window.ConfigLab.monter(z, {
-      nom: 'Configuration du management visuel',
+      nom: 'Management visuel',
+      vue: { libelle: 'Management visuel', element: app },
       page: brouillon.page,
-      ongletInitial: ongletReglages,
+      ongletInitial: location.hash === '#reglages' ? 'reglages' : 'vue',
       onglets: [{ id: 'reglages', libelle: 'Réglages', rendre: function (zone) { zone.innerHTML = reglagesPropres(); } }],
       apercu: function (zone) {
         zone.innerHTML = '<h1 class="fr-h3">Management visuel</h1><p class="fr-text--sm">Météo de la semaine, signalements, actions</p>' +
           '<div class="fr-card fr-card--sm fr-mb-2w"><div class="fr-card__body"><div class="fr-card__content"><h2 class="fr-card__title">Exemple de zone</h2><p class="fr-card__desc">L\'en-tête et le pied de page ci-dessus encadrent tous les écrans de l\'outil.</p></div></div></div>';
       },
       publication: { mode: 'connecte', adresseWidget: location.href.split('#')[0].split('?')[0], texte: 'Pour un affichage en salle ou sur un écran partagé, ouvrez l\'outil puis choisissez « Mode affichage ».' },
-      surEnregistrer: enregistrerReglages,
-      surAnnuler: function () { brouillon = null; location.hash = ''; }
+      surEnregistrer: enregistrerReglages
     });
   }
   function enregistrerReglages() {
@@ -628,11 +626,12 @@
       actions.push(['ModifyColumn', x[0], x[1], { widgetOptions: JSON.stringify(o) }]);
     });
     grist.docApi.applyUserActions(actions).then(function () {
-      brouillon = null; etat.alerte = { type: 'success', texte: 'Réglages enregistrés.' };
       return charger();
-    }).then(function () { location.hash = ''; rendre(); }).catch(function (err) {
-      etat.alerte = { type: 'error', texte: 'Enregistrement impossible : seuls les propriétaires du document peuvent modifier les réglages. (' + ((err && err.message) || err) + ')' };
+    }).then(function () {
+      if (configLab) { configLab.enregistre(); configLab.message('success', 'Réglages enregistrés.'); }
       rendre();
+    }).catch(function (err) {
+      if (configLab) configLab.message('error', 'Enregistrement impossible : seuls les propriétaires du document peuvent modifier les réglages. (' + ((err && err.message) || err) + ')');
     });
   }
 
@@ -666,7 +665,7 @@
   // Événements
   // ---------------------------------------------------------------------------
 
-  app.addEventListener('click', function (e) {
+  ecoute.addEventListener('click', function (e) {
     var el = e.target.closest('button');
     if (!el) return;
     var a = el.getAttribute('data-action');
@@ -700,16 +699,16 @@
   });
 
   // Les réglages de l'en-tête sont dans le brouillon : on les garde en redessinant.
-  function rendreReglagesEnGardant() { var y = window.scrollY; if (configLab) ongletReglages = configLab.ongletActif(); app.innerHTML = vueReglages(); monterReglagesPage(); if (configLab) configLab.modifie(true); window.scrollTo(0, y); }
+  function rendreReglagesEnGardant() { var y = window.scrollY; if (configLab) { configLab.rafraichir('reglages'); configLab.modifie(true); } window.scrollTo(0, y); }
 
-  app.addEventListener('input', function (e) {
+  ecoute.addEventListener('input', function (e) {
     var el = e.target;
     if (el.hasAttribute('data-sig')) { etat.brouillons.sig = etat.brouillons.sig || {}; etat.brouillons.sig[el.getAttribute('data-sig')] = el.value; }
     if (el.hasAttribute('data-r') && brouillon && !el.hasAttribute('data-r-rendre') && el.type !== 'checkbox') {
       poser(brouillon, el.getAttribute('data-r'), el.getAttribute('data-r-type') === 'nombre' ? num(el.value) : el.value);
     }
   });
-  app.addEventListener('change', function (e) {
+  ecoute.addEventListener('change', function (e) {
     var el = e.target;
     if (el.hasAttribute('data-action-table')) {
       executer([['UpdateRecord', el.getAttribute('data-action-table'), num(el.getAttribute('data-action-id')), { Etat: el.value }]], 'État de l\'action mis à jour.');
@@ -757,7 +756,7 @@
     }
   });
 
-  window.addEventListener('hashchange', function () { etat.alerte = null; brouillon = null; ongletReglages = 'reglages'; rendre(); });
+  window.addEventListener('hashchange', function () { etat.alerte = null; if (configLab) configLab.onglet(location.hash === '#reglages' ? 'reglages' : 'vue'); rendre(); });
 
   // ---------------------------------------------------------------------------
   // Thème et démarrage
@@ -779,7 +778,6 @@
   function rendreSiLibre() {
     var a = document.activeElement;
     if (a && app.contains(a) && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return;
-    if (location.hash === '#reglages') return;
     rendre();
   }
 

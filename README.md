@@ -37,7 +37,7 @@ Les écrans se composent alors automatiquement selon ce que contient le document
 
 ## Le régler
 
-Le bouton *Configurer* (en haut du widget) ouvre une page de configuration unique, en quatre onglets : *Réglages*, *En-tête et pied*, *Aperçu* (le rendu avec les réglages en cours) et *Publication* (qui peut utiliser l'outil, adresse du widget). Le lien *Réglages de l'espace*, en bas du widget, y mène aussi. L'onglet *Réglages* contient :
+Le widget s'ouvre sur une barre d'onglets : *Management visuel* (l'outil), puis *Réglages*, *En-tête et pied*, *Aperçu* (le rendu avec les réglages en cours) et *Publication* (qui peut utiliser l'outil, adresse du widget). Le lien *Réglages de l'espace*, en bas du widget, y mène aussi. L'onglet *Réglages* contient :
 
 | Rubrique | Ce qu'on y règle |
 | --- | --- |
