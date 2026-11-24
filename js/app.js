@@ -41,7 +41,8 @@
   ];
   var LARGEURS = [[4, 'Un tiers'], [6, 'Moitié'], [8, 'Deux tiers'], [12, 'Pleine largeur']];
 
-  var DEMO = window.self === window.top;
+  var PUBLIC = !!(window.GristPublic && window.GristPublic.actif);
+  var DEMO = window.self === window.top && !PUBLIC;
   var C = {};              // configuration en vigueur
   var reglages = {};       // configuration enregistrée
   var meta = { tables: [], colonnes: [], colConfig: false };
@@ -604,7 +605,13 @@
         zone.innerHTML = '<h1 class="fr-h3">Management visuel</h1><p class="fr-text--sm">Météo de la semaine, signalements, actions</p>' +
           '<div class="fr-card fr-card--sm fr-mb-2w"><div class="fr-card__body"><div class="fr-card__content"><h2 class="fr-card__title">Exemple de zone</h2><p class="fr-card__desc">L\'en-tête et le pied de page ci-dessus encadrent tous les écrans de l\'outil.</p></div></div></div>';
       },
-      publication: { mode: 'connecte', adresseWidget: location.href.split('#')[0].split('?')[0], texte: 'Pour un affichage en salle ou sur un écran partagé, ouvrez l\'outil puis choisissez « Mode affichage ».' },
+      publication: { mode: 'connecte', adresseWidget: location.href.split('#')[0].split('?')[0], texte: 'Pour un affichage en salle ou sur un écran partagé, ouvrez l\'outil puis choisissez « Mode affichage ».',
+        publier: {
+          lienDoc: (brouillon.publication && brouillon.publication.lienDoc) || '',
+          texte: 'Les écrans du management visuel (synthèse, météo, signalements, actions, réunion, projets, tableaux) s\'affichent en page complète, sans compte Grist, en lecture seule. Réservez cette page aux informations qui peuvent être vues hors de l\'équipe.',
+          construire: function (l) { return window.GristPublic ? window.GristPublic.lien(location.href.split('#')[0].split('?')[0], { doc: l, table: 'Meteo' }) : null; },
+          surChangement: function (l) { brouillon.publication = { lienDoc: l }; }
+        } },
       surEnregistrer: enregistrerReglages
     });
   }

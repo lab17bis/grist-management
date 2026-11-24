@@ -2,6 +2,14 @@
 
 Les adresses `/v1/` ne changent pas : chaque version ajoute ou corrige, sans retirer ce qui existe.
 
+## 2026-11-24 (page publique)
+
+### Ajouté
+- Page publique en lecture seule : les écrans du management visuel (synthèse, météo, signalements, actions, réunion, projets, tableaux), sans saisie. L'adresse `index.html?public=1&doc=<lien du document Grist>&table=Meteo` l'affiche sans compte Grist.
+- Module commun `commun/grist-public.js` (et `.css`) : lit le document par l'API REST de Grist, en lecture seule, sans compte.
+- Onglet Publication : saisissez le lien du document Grist partagé en lecture publique, l'outil construit le lien de la page publique, à copier ou à ouvrir ; le lien est enregistré avec les réglages.
+- Option `integre=1` : page sans en-tête ni pied propres, pour l'intégrer dans un autre site.
+
 ## 2026-11-24 (documentation)
 
 ### Modifié

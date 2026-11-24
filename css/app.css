@@ -110,3 +110,7 @@ td.mg-meteo__auj { outline: 2px solid var(--border-plain-blue-france); outline-o
 /* Coque à onglets (ajout 2026-11-24) */
 #mg-coque #mg-app { padding-left: 0; padding-right: 0; }
 .mg-affichage .cl-barre { display: none !important; }
+
+/* Page publique : lecture seule. */
+.gp-public .mg-saisie, .gp-public .tb-outils, .gp-public .tb-donnees, .gp-public .tb-filtres,
+.gp-public [data-action="installer"], .gp-public [data-installer] { display: none !important; }
