@@ -535,11 +535,17 @@
   // ---------------------------------------------------------------------------
 
   var brouillon = null;
-  function vueReglages() {
-    if (DEMO) return '<div class="fr-alert fr-alert--info"><p>Les réglages se font dans Grist, par un propriétaire du document.</p></div><p><a class="fr-link" href="#">Retour</a></p>';
+  var configLab = null, ongletReglages = 'reglages';
+  function ouvrirBrouillon() {
     if (!brouillon) { brouillon = JSON.parse(JSON.stringify(reglages || {})); if (!Array.isArray(brouillon.ecrans) || !brouillon.ecrans.length) brouillon.ecrans = JSON.parse(JSON.stringify(ecransAuto())); }
+  }
+  function vueReglages() {
+    ouvrirBrouillon();
+    return '<div class="mg-titre-ligne"><h1 class="fr-h3">Configuration de l\'espace</h1><a class="fr-link fr-icon-arrow-left-line fr-link--icon-left" href="#">Retour</a></div>' + blocAlerte() + '<div id="mg-config"></div>';
+  }
+  function reglagesPropres() {
     var b = brouillon;
-    var h = '<div class="mg-titre-ligne"><h1 class="fr-h3">Réglages de l\'espace</h1><a class="fr-link fr-icon-arrow-left-line fr-link--icon-left" href="#">Retour</a></div>' + blocAlerte() +
+    var h = '<div class="cl-panneau">' +
       '<p class="fr-text--sm">Réservé aux propriétaires du document. Enregistré dans la description de la colonne <code>' + NOM_COLONNE_CONFIG + '</code> de la table Meteo.</p>' +
       '<section><h2 class="fr-h5">Écrans</h2><p class="fr-text--sm">Chaque écran assemble des zones. En mode affichage, les écrans défilent tour à tour.</p>';
     b.ecrans.forEach(function (e, i) {
@@ -563,11 +569,8 @@
       '<div class="fr-input-group"><label class="fr-label" for="rg-esc">Niveaux d\'escalade<span class="fr-hint-text">Un par ligne, du plus proche au plus élevé.</span></label><textarea class="fr-input" rows="3" id="rg-esc">' + esc((b.escalade || DEFAUTS.escalade).join('\n')) + '</textarea></div>' +
       '<div class="mg-trois">' + nombreR('joursMeteo', 'Jours affichés dans la météo', b.joursMeteo || DEFAUTS.joursMeteo) + nombreR('delaiSignalement', 'Délai de résolution d\'un signalement (jours)', b.delaiSignalement || DEFAUTS.delaiSignalement) +
       nombreR('rotation', 'Rotation des écrans en mode affichage (secondes)', b.rotation || DEFAUTS.rotation) + '</div>' +
-      '<div class="fr-checkbox-group fr-checkbox-group--sm"><input type="checkbox" id="rg-we" data-r="weekend" data-r-type="case"' + (b.weekend ? ' checked' : '') + '><label class="fr-label" for="rg-we">Afficher le samedi et le dimanche dans la météo</label></div></section>' +
-      '<section class="fr-mt-3w"><h2 class="fr-h5">En-tête et pied de page</h2><div id="mg-reglages-page"></div></section>' +
-      '<ul class="fr-btns-group fr-btns-group--inline-md fr-mt-3w"><li><button type="button" class="fr-btn" data-action="enregistrer-reglages">Enregistrer les réglages</button></li>' +
-      '<li><button type="button" class="fr-btn fr-btn--secondary" data-action="annuler-reglages">Annuler les modifications</button></li></ul>';
-    return h;
+      '<div class="fr-checkbox-group fr-checkbox-group--sm"><input type="checkbox" id="rg-we" data-r="weekend" data-r-type="case"' + (b.weekend ? ' checked' : '') + '><label class="fr-label" for="rg-we">Afficher le samedi et le dimanche dans la météo</label></div></section>';
+    return h + '</div>';
   }
   function selectR(p, lib, val, opts) {
     return '<div class="fr-select-group"><label class="fr-label" for="' + p + '">' + esc(lib) + '</label><select class="fr-select" id="' + p + '" data-r="' + p + '"' + (typeof opts[0][0] === 'number' ? ' data-r-type="nombre"' : '') + ' data-r-rendre="1">' +
@@ -590,13 +593,26 @@
   function chemin(o, p) { return p.split('.').reduce(function (x, k) { return x == null ? x : x[k]; }, o); }
   function poser(o, p, v) { var k = p.split('.'), d = k.pop(); chemin(o, k.join('.'))[d] = v; }
   function monterReglagesPage() {
-    var z = document.getElementById('mg-reglages-page');
-    if (!z || !window.PageEditeur || !brouillon) return;
+    var z = document.getElementById('mg-config');
+    if (!z || !window.ConfigLab || !brouillon) return;
     brouillon.page = brouillon.page || { marque: '', titre: 'Management visuel', pied: { accessibilite: '' } };
-    window.PageEditeur.monter(z, brouillon.page, function () {});
+    configLab = window.ConfigLab.monter(z, {
+      nom: 'Configuration du management visuel',
+      page: brouillon.page,
+      ongletInitial: ongletReglages,
+      onglets: [{ id: 'reglages', libelle: 'Réglages', rendre: function (zone) { zone.innerHTML = reglagesPropres(); } }],
+      apercu: function (zone) {
+        zone.innerHTML = '<h1 class="fr-h3">Management visuel</h1><p class="fr-text--sm">Météo de la semaine, signalements, actions</p>' +
+          '<div class="fr-card fr-card--sm fr-mb-2w"><div class="fr-card__body"><div class="fr-card__content"><h2 class="fr-card__title">Exemple de zone</h2><p class="fr-card__desc">L\'en-tête et le pied de page ci-dessus encadrent tous les écrans de l\'outil.</p></div></div></div>';
+      },
+      publication: { mode: 'connecte', adresseWidget: location.href.split('#')[0].split('?')[0], texte: 'Pour un affichage en salle ou sur un écran partagé, ouvrez l\'outil puis choisissez « Mode affichage ».' },
+      surEnregistrer: enregistrerReglages,
+      surAnnuler: function () { brouillon = null; location.hash = ''; }
+    });
   }
   function enregistrerReglages() {
     var b = brouillon;
+    if (DEMO) { if (configLab) configLab.message('info', 'Mode démonstration : rien n\'est enregistré. Dans Grist, les réglages sont enregistrés dans le document.'); return; }
     function lignes(id) { return document.getElementById(id).value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean); }
     b.rubriques = lignes('rg-rub'); b.escalade = lignes('rg-esc');
     if (!b.rubriques.length) delete b.rubriques;
@@ -684,7 +700,7 @@
   });
 
   // Les réglages de l'en-tête sont dans le brouillon : on les garde en redessinant.
-  function rendreReglagesEnGardant() { var y = window.scrollY; app.innerHTML = vueReglages(); monterReglagesPage(); window.scrollTo(0, y); }
+  function rendreReglagesEnGardant() { var y = window.scrollY; if (configLab) ongletReglages = configLab.ongletActif(); app.innerHTML = vueReglages(); monterReglagesPage(); if (configLab) configLab.modifie(true); window.scrollTo(0, y); }
 
   app.addEventListener('input', function (e) {
     var el = e.target;
@@ -741,7 +757,7 @@
     }
   });
 
-  window.addEventListener('hashchange', function () { etat.alerte = null; brouillon = null; rendre(); });
+  window.addEventListener('hashchange', function () { etat.alerte = null; brouillon = null; ongletReglages = 'reglages'; rendre(); });
 
   // ---------------------------------------------------------------------------
   // Thème et démarrage
