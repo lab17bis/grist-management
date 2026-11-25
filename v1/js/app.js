@@ -424,7 +424,7 @@
       var t = etat.tableaux.filter(function (x) { return x.cle === cle; })[0];
       if (!t) { zone.innerHTML = '<p class="mg-vide">Tableau de bord introuvable. Choisissez-en un dans les réglages.</p>'; return; }
       if (!window.Tableau || !window.Donnees) { zone.innerHTML = '<p class="mg-vide">Les modules de grist-graphique n\'ont pas pu être chargés.</p>'; return; }
-      var source = DEMO ? window.Donnees.sourceDemo('../../grist-graphique/v1/exemples/demo.json') : window.Donnees.sourceWidget();
+      var source = DEMO ? window.Donnees.sourceDemo('../../../grist-graphique/v1/v1/exemples/demo.json') : window.Donnees.sourceWidget();
       var conf = DEMO ? source.config().then(function (c) { return c.config; }) : Promise.resolve().then(function () {
         var col = colonnesDe(t.hote).filter(function (c) { return c.colId === 'Config_graphique'; })[0];
         return JSON.parse(col.description);
@@ -537,7 +537,7 @@
 
   var brouillon = null;
   var ecoute = document.getElementById('mg-coque') || app;
-  var configLab = null;
+  var configLab = null, avantApercu = null;
   function ouvrirBrouillon() {
     if (!brouillon) { brouillon = JSON.parse(JSON.stringify(reglages || {})); if (!Array.isArray(brouillon.ecrans) || !brouillon.ecrans.length) brouillon.ecrans = JSON.parse(JSON.stringify(ecransAuto())); }
   }
@@ -601,9 +601,17 @@
       page: brouillon.page,
       ongletInitial: location.hash === '#reglages' ? 'reglages' : 'vue',
       onglets: [{ id: 'reglages', libelle: 'Réglages', rendre: function (zone) { zone.innerHTML = reglagesPropres(); } }],
-      apercu: function (zone) {
-        zone.innerHTML = '<h1 class="fr-h3">Management visuel</h1><p class="fr-text--sm">Météo de la semaine, signalements, actions</p>' +
-          '<div class="fr-card fr-card--sm fr-mb-2w"><div class="fr-card__body"><div class="fr-card__content"><h2 class="fr-card__title">Exemple de zone</h2><p class="fr-card__desc">L\'en-tête et le pied de page ci-dessus encadrent tous les écrans de l\'outil.</p></div></div></div>';
+      // Aperçu réel : l'outil lui-même s'affiche sous l'en-tête, avec les réglages en cours (même non enregistrés).
+      surApercu: function (ouvert) {
+        if (ouvert && configLab && configLab.estModifie() && brouillon) {
+          avantApercu = reglages;
+          var d = JSON.parse(JSON.stringify(brouillon));
+          function lignes(id) { var n = document.getElementById(id); return n ? n.value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean) : []; }
+          var rub = lignes('rg-rub'), esc2 = lignes('rg-esc');
+          if (rub.length) d.rubriques = rub; else delete d.rubriques;
+          if (esc2.length) d.escalade = esc2; else delete d.escalade;
+          appliquerReglages(d); rendre();
+        } else if (!ouvert && avantApercu) { appliquerReglages(avantApercu); avantApercu = null; rendre(); }
       },
       publication: { mode: 'connecte', adresseWidget: location.href.split('#')[0].split('?')[0], texte: 'Pour un affichage en salle ou sur un écran partagé, ouvrez l\'outil puis choisissez « Mode affichage ».',
         publier: {
@@ -763,7 +771,7 @@
     }
   });
 
-  window.addEventListener('hashchange', function () { etat.alerte = null; if (configLab) configLab.onglet(location.hash === '#reglages' ? 'reglages' : 'vue'); rendre(); });
+  window.addEventListener('hashchange', function () { etat.alerte = null; if (configLab && configLab.ongletActif() !== 'apercu') configLab.onglet(location.hash === '#reglages' ? 'reglages' : 'vue'); rendre(); });
 
   // ---------------------------------------------------------------------------
   // Thème et démarrage
