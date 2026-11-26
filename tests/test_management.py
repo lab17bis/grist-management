@@ -13,6 +13,9 @@ with sync_playwright() as p:
     pg = b.new_page(viewport={'width': 1400, 'height': 1000}); erreurs = []
     pg.on('pageerror', lambda e: erreurs.append(str(e)))
     pg.goto(URL); pg.wait_for_selector('.mg-grille')
+    # Version figée v1 : les modules de grist-graphique doivent se charger (régression 2026-11-26, chemin doublé).
+    pv = b.new_page(); pv.goto(URL.rstrip('/') + '/v1/'); pv.wait_for_selector('.mg-grille')
+    verifier('v1 : modules grist-graphique chargés', pv.evaluate('!!(window.Tableau && window.Donnees)')); pv.close()
     verifier('écrans automatiques', pg.locator('[data-ecran]').count() == 3)
     verifier('chiffres clés', pg.locator('.mg-chiffre').count() >= 4)
     verifier('météo : 5 rubriques', pg.locator('.mg-meteo tbody tr').count() == 5)
