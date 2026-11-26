@@ -470,7 +470,7 @@
       ec.map(function (x, i) { return '<li><button type="button" class="fr-btn' + (i === etat.ecran ? '' : ' fr-btn--secondary') + '" data-ecran="' + i + '"' + (i === etat.ecran ? ' aria-current="page"' : '') + '>' + esc(x.titre || 'Écran ' + (i + 1)) + '</button></li>'; }).join('') +
       '</ul></nav><p class="mg-horloge" aria-hidden="true"></p>' +
       '<button type="button" class="fr-btn fr-btn--sm fr-btn--tertiary fr-icon-fullscreen-line fr-btn--icon-left mg-bouton-affichage" data-action="affichage">' + (etat.affichage ? 'Quitter le mode affichage' : 'Mode affichage') + '</button></div>' +
-      blocAlerte() + '<div class="mg-grille">' + (e.zones || []).map(rendreZone).join('') + '</div>';
+      blocAlerte() + blocColonnesManquantes() + '<div class="mg-grille">' + (e.zones || []).map(rendreZone).join('') + '</div>';
     app.innerHTML = h;
     majHorloge();
     monterTableaux();
@@ -482,7 +482,8 @@
 
   function vueInstallation() {
     return '<h1 class="fr-h3">Installer l\'espace de management visuel</h1>' + blocAlerte() +
-      '<p>Le widget va créer deux tables dans ce document : <code>Meteo</code> (la météo du jour par rubrique) et <code>Signalements</code> (les problèmes et leur escalade). Les tables existantes ne sont pas modifiées.</p>' +
+      '<p>Le widget va créer deux tables dans ce document : <code>Meteo</code> (la météo du jour par rubrique) et <code>Signalements</code> (les problèmes et leur escalade).' +
+      (aTable('Meteo') || aTable('Signalements') ? ' La table déjà présente est gardée : le widget lui ajoute seulement les colonnes qui lui manquent, rien n\'est renommé ni supprimé.</p><p class="fr-text--sm">' + CONSEIL_RENOMMER + '</p>' : ' Les tables existantes ne sont pas modifiées.</p>') +
       '<p>Il affichera aussi, s\'ils sont dans ce document, les tableaux de bord de <strong>grist-graphique</strong>, les réunions et actions de <strong>grist-reunion</strong> et les projets de <strong>grist-projet</strong>.</p>' +
       '<p class="fr-text--sm">À faire par un propriétaire du document. Le widget doit avoir l\'accès complet au document.</p>' +
       '<ul class="fr-btns-group fr-btns-group--inline-md"><li><button type="button" class="fr-btn" data-installer="vide">Créer les tables</button></li>' +
@@ -490,8 +491,8 @@
   }
 
   function choix(l) { return { type: 'Choice', widgetOptions: JSON.stringify({ choices: l }) }; }
-  function installer(exemple) {
-    var sch = {
+  function schemaMg() {
+    return {
       Meteo: [['Date', { type: 'Date' }], ['Rubrique', choix(C.rubriques)], ['Statut', { type: 'Choice', widgetOptions: JSON.stringify({ choices: STATUTS_METEO.map(function (s) { return s.nom; }), choiceOptions: COULEURS_GRIST }) }],
         ['Commentaire', { type: 'Text' }], ['Saisi_par', { type: 'Text', isFormula: false, formula: 'user.Name' }], [NOM_COLONNE_CONFIG, { type: 'Text' }]],
       Signalements: [['Titre', { type: 'Text' }], ['Description', { type: 'Text' }], ['Rubrique', choix(C.rubriques)], ['Gravite', { type: 'Choice', widgetOptions: JSON.stringify({ choices: GRAVITES, choiceOptions: COULEURS_GRIST }) }],
@@ -499,9 +500,47 @@
         ['Signale_par', { type: 'Text', isFormula: false, formula: 'user.Name' }], ['Signale_le', { type: 'DateTime:Europe/Paris', isFormula: false, formula: 'NOW()' }],
         ['Resolu_le', { type: 'DateTime:Europe/Paris' }]]
     };
+  }
+  // Tables Meteo ou Signalements déjà présentes (créées à la main) : le widget les garde
+  // et leur ajoute seulement les colonnes qui leur manquent.
+  function colonnesManquantes() {
+    if (DEMO || PUBLIC || !meta.tables.length) return [];
+    var sch = schemaMg(), r = [];
+    Object.keys(sch).forEach(function (t) {
+      if (!aTable(t)) return;
+      sch[t].forEach(function (c) { if (!aColonne(t, c[0])) r.push({ table: t, id: c[0], def: c[1] }); });
+    });
+    return r;
+  }
+  var CONSEIL_RENOMMER = 'Si l\'une de vos colonnes contient déjà cette information sous un autre nom (par exemple <code>Jour</code> au lieu de <code>Date</code>), renommez-la d\'abord dans Grist avec le nom attendu : ses données seront reprises.';
+  function blocColonnesManquantes() {
+    var m = colonnesManquantes();
+    if (!m.length) return '';
+    return '<div class="fr-alert fr-alert--warning fr-mb-3w"><h2 class="fr-alert__title">Des colonnes attendues manquent dans vos tables</h2>' +
+      '<p>' + m.map(function (c) { return '<code>' + esc(c.table + '.' + c.id) + '</code>'; }).join(', ') + '. Sans elles, le widget ne peut ni afficher ni enregistrer ces informations.</p>' +
+      '<p class="fr-text--sm">' + CONSEIL_RENOMMER + ' Sinon, ajoutez-les : rien n\'est renommé ni supprimé. À faire par un propriétaire du document.</p>' +
+      '<button type="button" class="fr-btn fr-btn--sm" data-action="completer-colonnes">Ajouter les colonnes manquantes</button></div>';
+  }
+  function actionsColonnesManquantes() {
+    return colonnesManquantes().map(function (c) { return ['AddColumn', c.table, c.id, Object.assign({}, c.def)]; });
+  }
+  function completerColonnes() {
+    var a = actionsColonnesManquantes();
+    if (!a.length) return;
+    grist.docApi.applyUserActions(a).then(function () {
+      etat.alerte = { type: 'success', texte: a.length + ' colonne(s) ajoutée(s).' };
+      return charger();
+    }).then(rendre).catch(function (err) {
+      etat.alerte = { type: 'error', texte: 'Ajout impossible : seuls les propriétaires du document peuvent ajouter des colonnes. (' + ((err && err.message) || err) + ')' };
+      rendre();
+    });
+  }
+  function installer(exemple) {
+    var sch = schemaMg();
     var actions = Object.keys(sch).filter(function (t) { return !aTable(t); }).map(function (t) {
       return ['AddTable', t, sch[t].map(function (c) { return Object.assign({ id: c[0] }, c[1]); })];
     });
+    actions = actions.concat(actionsColonnesManquantes());
     return grist.docApi.applyUserActions(actions).then(function () {
       if (!exemple) return null;
       return fetch('exemples/demo.json').then(function (r) { return r.json(); }).then(function (j) {
@@ -689,6 +728,7 @@
     if (a === 'annuler-resolution') { etat.resolution = null; rendre(); return; }
     if (a === 'enregistrer-reglages') { enregistrerReglages(); return; }
     if (a === 'annuler-reglages') { brouillon = null; location.hash = ''; return; }
+    if (a === 'completer-colonnes') { el.disabled = true; completerColonnes(); return; }
     if (el.hasAttribute('data-installer')) { el.disabled = true; installer(el.getAttribute('data-installer') === 'exemple'); return; }
     if (el.hasAttribute('data-signalement')) {
       var id = num(el.getAttribute('data-signalement')), f = el.getAttribute('data-faire');
