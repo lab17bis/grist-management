@@ -424,7 +424,7 @@
       var t = etat.tableaux.filter(function (x) { return x.cle === cle; })[0];
       if (!t) { zone.innerHTML = '<p class="mg-vide">Tableau de bord introuvable. Choisissez-en un dans les réglages.</p>'; return; }
       if (!window.Tableau || !window.Donnees) { zone.innerHTML = '<p class="mg-vide">Les modules de grist-graphique n\'ont pas pu être chargés.</p>'; return; }
-      var source = DEMO ? window.Donnees.sourceDemo('../../../grist-graphique/v1/v1/exemples/demo.json') : window.Donnees.sourceWidget();
+      var source = DEMO ? window.Donnees.sourceDemo('../../grist-graphique/v1/exemples/demo.json') : window.Donnees.sourceWidget();
       var conf = DEMO ? source.config().then(function (c) { return c.config; }) : Promise.resolve().then(function () {
         var col = colonnesDe(t.hote).filter(function (c) { return c.colId === 'Config_graphique'; })[0];
         return JSON.parse(col.description);

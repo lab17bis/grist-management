@@ -19,6 +19,7 @@ done
 # Ce widget charge des modules de grist-graphique : la version figée pointe vers
 # la version figée correspondante de grist-graphique, pas vers sa version en cours.
 for f in "$DEST/index.html" "$DEST/js/app.js"; do
-  sed -i.bak "s#\.\./grist-graphique/#../../grist-graphique/v$N/#g" "$f" && rm -f "$f.bak"
+  # Toute forme de chemin (../grist-graphique/, ../../grist-graphique/v1/…) devient ../../grist-graphique/vN/ : relancer le script ne double plus le chemin.
+  sed -E -i.bak "s#(\.\./)+grist-graphique/(v[0-9]+/)?#../../grist-graphique/v$N/#g" "$f" && rm -f "$f.bak"
 done
 echo "Version stable copiée dans $DEST/"
