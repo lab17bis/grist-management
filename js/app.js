@@ -503,12 +503,13 @@
   }
   // Tables Meteo ou Signalements déjà présentes (créées à la main) : le widget les garde
   // et leur ajoute seulement les colonnes qui leur manquent.
+  // La colonne des réglages n'en fait pas partie : elle est créée au premier enregistrement.
   function colonnesManquantes() {
     if (DEMO || PUBLIC || !meta.tables.length) return [];
     var sch = schemaMg(), r = [];
     Object.keys(sch).forEach(function (t) {
       if (!aTable(t)) return;
-      sch[t].forEach(function (c) { if (!aColonne(t, c[0])) r.push({ table: t, id: c[0], def: c[1] }); });
+      sch[t].forEach(function (c) { if (c[0] !== NOM_COLONNE_CONFIG && !aColonne(t, c[0])) r.push({ table: t, id: c[0], def: c[1] }); });
     });
     return r;
   }
