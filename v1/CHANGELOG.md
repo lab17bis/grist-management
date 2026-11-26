@@ -2,6 +2,17 @@
 
 Les adresses `/v1/` ne changent pas : chaque version ajoute ou corrige, sans retirer ce qui existe.
 
+## 2026-11-26 (style commun de configuration)
+
+### Corrigé
+- Configuration : sur l'onglet de l'outil, le style commun masquait par erreur tout champ dont l'identifiant finit par « -etat » (dans grist-projet : le filtre « État » de la banque et la liste « État » du formulaire de projet). Seul le badge « Enregistré » de la barre est maintenant masqué. Rien à refaire : rechargez la page.
+
+## 2026-11-26 (correctif : tableaux de bord dans la version v1)
+
+### Corrigé
+- Adresse `/v1/` : les modules de grist-graphique (tableaux de bord, graphiques) ne se chargeaient plus (chemin doublé `grist-graphique/v1/v1/`, erreur 404). Le bloc « Tableau de bord » affichait « Les modules de grist-graphique n'ont pas pu être chargés ». Rien à refaire dans vos documents : rechargez la page.
+- Script de version (`outils/figer-version.sh`) : relancé plusieurs fois, il ne double plus le chemin.
+
 ## 2026-11-25 (mention de conception)
 
 ### Ajouté
