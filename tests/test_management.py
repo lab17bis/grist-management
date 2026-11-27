@@ -48,7 +48,7 @@ with sync_playwright() as p:
     pg.locator('.cl-barre label', has_text='Aperçu').click(); pg.wait_for_timeout(600)
     verifier('aperçu réel : l\'outil est dans le cadre de l\'aperçu', pg.locator('.cl-apercu #mg-app .mg-grille').count() == 1)
     verifier('aperçu réel : les réglages non enregistrés s\'appliquent', 'Rubrique brouillon' in pg.locator('.cl-apercu #mg-app').inner_text())
-    pg.locator('.cl-barre label').first.click(); pg.wait_for_timeout(600)
+    pg.locator('.cl-barre .cl-onglets label', has_text='Réglages').click(); pg.wait_for_timeout(600)
     verifier('aperçu quitté : l\'outil est revenu dans son onglet, réglages enregistrés rétablis', pg.locator('.cl-apercu #mg-app').count() == 0 and 'Rubrique brouillon' not in pg.locator('#mg-app').inner_text())
     verifier('aucune erreur JavaScript', not erreurs)
     if erreurs: print(erreurs)

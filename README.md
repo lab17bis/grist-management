@@ -37,7 +37,11 @@ Les écrans se composent alors automatiquement selon ce que contient le document
 
 ## Le régler
 
-Le widget s'ouvre sur une barre d'onglets : *Management visuel* (l'outil), puis *Réglages*, *En-tête et pied*, *Aperçu* (le rendu avec les réglages en cours) et *Publication* (qui peut utiliser l'outil, adresse du widget). Le lien *Réglages de l'espace*, en bas du widget, y mène aussi. L'onglet *Réglages* contient :
+La barre de l'éditeur est commune à tous les widgets : nom du widget et statut d'enregistrement à gauche, onglets *Réglages*, *En-tête et pied*, *Aperçu* et *Publication* au centre, bouton *Enregistrer* à droite. L'outil s'utilise dans l'onglet *Aperçu*, ouvert par défaut, avec son en-tête et son pied de page.
+
+**Éditeur du widget ou page d'usage, avec le même lien.** Chaque vue Grist choisit ce qu'elle affiche (onglet *Publication*, rubrique *Affichage de cette vue Grist*) : l'**éditeur du widget** (affichage par défaut) ou la **page d'usage** (l'outil avec son en-tête et son pied de page, sans barre de réglages ; un lien *Éditer le widget*, en bas de page, rouvre l'éditeur). Pour avoir les deux dans un document, ajoutez deux vues Personnalisées avec la même adresse. Ce choix n'est pas une protection : les droits restent ceux du document (Partager, Permissions avancées).
+
+L'onglet *Réglages* contient :
 
 | Rubrique | Ce qu'on y règle |
 | --- | --- |
