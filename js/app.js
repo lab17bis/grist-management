@@ -669,7 +669,7 @@
     ouvrirBrouillon();
     brouillon.page = brouillon.page || { marque: '', titre: 'Management visuel', pied: { accessibilite: '' } };
     configLab = window.ConfigLab.monter(z, {
-      nom: 'Widget management visuel',
+      nom: 'Widget management',
       vue: { libelle: 'Management visuel', element: app },
       page: brouillon.page,
       ongletInitial: location.hash === '#reglages' ? 'reglages' : 'vue',

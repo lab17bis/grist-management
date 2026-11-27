@@ -4,6 +4,7 @@ Les adresses `/v1/` ne changent pas : chaque version ajoute ou corrige, sans ret
 
 ## 2026-11-27 (Réglages › Données)
 - Nouvelle rubrique *Réglages › Données* (fichier partagé `commun/donnees.js`) : tables partagées avec les autres outils, état des règles d'accès, colonnes de lien.
+- Nom affiché dans la barre de l'éditeur : « Widget management ».
 - Colonnes de lien calculées, ajoutées sur demande : `Signalements.Responsable_fiche`, `Signalements.Signale_par_fiche`, `Meteo.Saisi_par_fiche` (vers `Personnes`). Le texte saisi est gardé.
 
 ## 2026-11-27 (barre commune de l'éditeur)
