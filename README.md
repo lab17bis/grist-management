@@ -109,6 +109,8 @@ Plusieurs outils de la même famille peuvent travailler dans un même document G
 
 Ce que fait cet outil : Il ne crée pas de table de personnes. Il lit `Personnes` pour afficher les responsables des actions de projet.
 
+**Réglages › Données** montre les tables partagées et les outils qui s'en servent, l'état des règles d'accès de `Meteo` et `Signalements`, et propose des **colonnes de lien** calculées par Grist (bouton *Ajouter les colonnes de lien*, réservé aux propriétaires) : `Signalements.Responsable_fiche`, `Signalements.Signale_par_fiche` et `Meteo.Saisi_par_fiche` relient le nom saisi à la fiche de `Personnes` (même nom, sans tenir compte des majuscules). Le texte saisi est gardé ; supprimer une de ces colonnes ne perd aucune donnée. L'outil ne propose pas encore de règles d'accès pour la météo et les signalements.
+
 ## Espaces clés en main
 
 Ce widget est déjà assemblé, avec d'autres, dans des **espaces** : des documents Grist complets à importer en une fois, vides ou avec un exemple fictif.

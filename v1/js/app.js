@@ -577,6 +577,39 @@
 
   var brouillon = null;
   var ecoute = document.getElementById('mg-coque') || app;
+  // Réglages › Données (commun/donnees.js) : tables partagées et colonnes de lien vers Personnes.
+  // Rien n'est modifié sans un clic d'un propriétaire. Les règles d'accès de la météo et des signalements viendront
+  // avec le management à deux niveaux (visibilité du ressenti de charge).
+  var PARTAGE = [['Actions_reunion', 'réunion (outil de référence)', 'suivi des actions décidées en réunion ; change leur état'],
+    ['Actions', 'suivi de projets (outil de référence)', 'suivi des actions des projets ; change leur état'],
+    ['Reunions, Points', 'réunion (outil de référence)', 'prochaines réunions et points, en lecture seule'],
+    ['Projets, Personnes', 'suivi de projets, annuaire', 'en lecture seule']];
+  var LIENS = window.DonneesLab ? [DonneesLab.lienPersonne('Signalements', 'Responsable', 'relie la personne responsable du signalement à sa fiche'),
+    DonneesLab.lienPersonne('Signalements', 'Signale_par', 'relie la personne qui a signalé à sa fiche'),
+    DonneesLab.lienPersonne('Meteo', 'Saisi_par', 'relie la personne qui a saisi la météo à sa fiche')] : [];
+  var aclDonnees = null;
+  function optionsDonnees() { return { demo: DEMO, tables: ['Meteo', 'Signalements'], partage: PARTAGE, regles: [], liens: LIENS,
+    noteRegles: 'L\'outil ne propose pas encore de règles pour <code>Meteo</code> et <code>Signalements</code> : par défaut, toute personne qui peut modifier le document lit et modifie toutes les lignes.' }; }
+  function rendreDonnees(zone) {
+    if (!window.DonneesLab) { zone.innerHTML = ''; return; }
+    if (!DEMO && !aclDonnees) DonneesLab.lire().then(function (a) { aclDonnees = a; if (configLab) configLab.rafraichir('donnees'); });
+    zone.innerHTML = DonneesLab.html(aclDonnees, meta, optionsDonnees());
+    if (zone.getAttribute('data-branche')) return;
+    zone.setAttribute('data-branche', '1');
+    zone.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-donnees]');
+      if (!b || b.disabled) return;
+      b.disabled = true;
+      DonneesLab.ajouterLiens(meta, LIENS).then(function (n) {
+        if (configLab) configLab.message('success', n + ' colonne(s) de lien ajoutée(s).');
+        return charger();
+      }).then(function () { rendre(); if (configLab) configLab.rafraichir('donnees'); }).catch(function (err) {
+        b.disabled = false;
+        if (configLab) configLab.message('error', 'Modification refusée par Grist : seuls les propriétaires du document le peuvent. (' + ((err && err.message) || err) + ')');
+      });
+    });
+  }
+
   var configLab = null, avantApercu = null;
   function ouvrirBrouillon() {
     if (!brouillon) { brouillon = JSON.parse(JSON.stringify(reglages || {})); if (!Array.isArray(brouillon.ecrans) || !brouillon.ecrans.length) brouillon.ecrans = JSON.parse(JSON.stringify(ecransAuto())); }
@@ -640,7 +673,8 @@
       vue: { libelle: 'Management visuel', element: app },
       page: brouillon.page,
       ongletInitial: location.hash === '#reglages' ? 'reglages' : 'vue',
-      onglets: [{ id: 'reglages', libelle: 'Réglages', rendre: function (zone) { zone.innerHTML = reglagesPropres(); } }],
+      onglets: [{ id: 'reglages', libelle: 'Général', rendre: function (zone) { zone.innerHTML = reglagesPropres(); } },
+        { id: 'donnees', libelle: 'Données', rendre: rendreDonnees }],
       // Aperçu réel : l'outil lui-même s'affiche sous l'en-tête, avec les réglages en cours (même non enregistrés).
       surApercu: function (ouvert) {
         if (ouvert && configLab && configLab.estModifie() && brouillon) {

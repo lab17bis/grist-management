@@ -2,6 +2,10 @@
 
 Les adresses `/v1/` ne changent pas : chaque version ajoute ou corrige, sans retirer ce qui existe.
 
+## 2026-11-27 (Réglages › Données)
+- Nouvelle rubrique *Réglages › Données* (fichier partagé `commun/donnees.js`) : tables partagées avec les autres outils, état des règles d'accès, colonnes de lien.
+- Colonnes de lien calculées, ajoutées sur demande : `Signalements.Responsable_fiche`, `Signalements.Signale_par_fiche`, `Meteo.Saisi_par_fiche` (vers `Personnes`). Le texte saisi est gardé.
+
 ## 2026-11-27 (barre commune de l'éditeur)
 - Barre commune à tous les widgets (fichier partagé `commun/barre.js` et `commun/barre.css`) : nom du widget et statut à gauche, onglets Réglages, En-tête et pied, Aperçu, Publication au centre, Enregistrer à droite ; barre collante en haut de l'écran.
 - L'outil n'a plus d'onglet à son nom : il s'utilise dans l'Aperçu, ouvert par défaut, avec l'en-tête et le pied de page (affichés une seule fois). Les rubriques propres à l'outil sont des sous-onglets de Réglages quand il y en a plusieurs.
