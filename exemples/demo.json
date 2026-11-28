@@ -1289,6 +1289,61 @@
     "Saisi_par": "p3",
     "Retenue": true
    }
+  ],
+  "Affectations": [
+   {
+    "id": 1,
+    "Email": "responsable@exemple.invalid",
+    "Nom": "Responsable de la direction (exemple fictif)",
+    "Equipes": [
+     "Pilotage"
+    ],
+    "Manager_de": [
+     "Pilotage"
+    ]
+   },
+   {
+    "id": 2,
+    "Email": "chef.accueil@exemple.invalid",
+    "Nom": "Chef de l'accueil (exemple fictif)",
+    "Equipes": [
+     "Accueil",
+     "Pilotage"
+    ],
+    "Manager_de": [
+     "Accueil"
+    ]
+   },
+   {
+    "id": 3,
+    "Email": "agent.accueil@exemple.invalid",
+    "Nom": "Agent de l'accueil (exemple fictif)",
+    "Equipes": [
+     "Accueil"
+    ],
+    "Manager_de": []
+   },
+   {
+    "id": 4,
+    "Email": "chef.gestion@exemple.invalid",
+    "Nom": "Cheffe de la gestion (exemple fictif)",
+    "Equipes": [
+     "Gestion",
+     "Pilotage"
+    ],
+    "Manager_de": [
+     "Gestion"
+    ]
+   },
+   {
+    "id": 5,
+    "Email": "agent.gestion@exemple.invalid",
+    "Nom": "Agent de la gestion (exemple fictif)",
+    "Equipes": [
+     "Gestion"
+    ],
+    "Manager_de": []
+   }
   ]
  },
  "choix": {
