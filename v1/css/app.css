@@ -114,3 +114,16 @@ td.mg-meteo__auj { outline: 2px solid var(--border-plain-blue-france); outline-o
 /* Page publique : lecture seule. */
 .gp-public .mg-saisie, .gp-public .tb-outils, .gp-public .tb-donnees, .gp-public .tb-filtres,
 .gp-public [data-action="installer"], .gp-public [data-installer] { display: none !important; }
+
+/* Deux niveaux : priorités, charge vécue, tension de charge */
+.mg-niveau { margin: 0; }
+.mg-priorites { list-style: none; padding: 0; margin: 0; }
+.mg-priorite { border-left: 4px solid var(--border-plain-info); padding: .5rem .75rem; margin-bottom: .75rem; background: var(--background-alt-grey); }
+.mg-priorite--chaud { border-left-color: var(--border-plain-warning); }
+.mg-priorite__titre { font-weight: 700; margin: 0 0 .25rem; }
+.mg-priorite__detail { margin: 0 0 .25rem; font-size: .875rem; }
+.mg-repartition { list-style: none; padding: 0; margin: .5rem 0; }
+.mg-repartition__el { display: grid; grid-template-columns: auto 1fr; gap: .25rem .5rem; align-items: center; margin-bottom: .5rem; }
+.mg-barre-pc { grid-column: 1 / -1; display: block; height: .5rem; background: var(--background-contrast-grey); border-radius: .25rem; overflow: hidden; }
+.mg-barre-pc > span { display: block; height: 100%; background: var(--mg-fond); }
+.mg-tension { font-size: 1.125rem; margin: 0 0 .25rem; }

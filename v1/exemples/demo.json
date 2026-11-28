@@ -496,7 +496,9 @@
     "Responsable": "",
     "Description": "Les convocations ne peuvent pas être imprimées sur place.",
     "Signale_par": "Alex Dupont",
-    "Signale_le": "J-6"
+    "Signale_le": "J-6",
+    "Equipe": "Accueil",
+    "Nature": "Problème"
    },
    {
     "id": 2,
@@ -507,7 +509,9 @@
     "Escalade": "Encadrement",
     "Responsable": "Camille Exemple",
     "Signale_par": "Lou Petit",
-    "Signale_le": "J-2"
+    "Signale_le": "J-2",
+    "Equipe": "Accueil",
+    "Nature": "Problème"
    },
    {
     "id": 3,
@@ -518,7 +522,9 @@
     "Escalade": "Équipe",
     "Responsable": "",
     "Signale_par": "Sacha Bernard",
-    "Signale_le": "J-1"
+    "Signale_le": "J-1",
+    "Equipe": "Accueil",
+    "Nature": "Problème"
    },
    {
     "id": 4,
@@ -530,7 +536,23 @@
     "Responsable": "Dominique Martin",
     "Resolution": "Goulotte posée.",
     "Signale_par": "Alex Dupont",
-    "Signale_le": "J-9"
+    "Signale_le": "J-9",
+    "Equipe": "Gestion",
+    "Nature": "Problème"
+   },
+   {
+    "id": 5,
+    "Titre": "Priorité entre la campagne d'inscriptions et l'inventaire",
+    "Rubrique": "Délais",
+    "Gravite": "Majeure",
+    "Statut": "Ouvert",
+    "Escalade": "Encadrement",
+    "Nature": "Demande d'arbitrage",
+    "Equipe": "Gestion",
+    "Responsable": "",
+    "Description": "Les deux échéances tombent la même semaine : laquelle décaler ?",
+    "Signale_par": "Exemple fictif",
+    "Signale_le": "J-2"
    }
   ],
   "Reunions": [
@@ -768,7 +790,8 @@
     "Intitule": "Commander les cartons de déménagement",
     "Responsable": "Dominique Martin",
     "Echeance": "J-9",
-    "Etat": "Fait"
+    "Etat": "Fait",
+    "Equipe": "Accueil"
    },
    {
     "id": 2,
@@ -976,6 +999,295 @@
     "id": 4,
     "Nom": "Sacha Exemple",
     "Structure": 2
+   }
+  ],
+  "Priorites": [
+   {
+    "id": 1,
+    "Titre": "Accueil du public pendant la campagne d'inscriptions",
+    "Detail": "Renfort au guichet le matin, file prioritaire pour les rendez-vous.",
+    "Type": "Priorité",
+    "Equipe": "Accueil",
+    "Debut": "J-7",
+    "Fin": "J+14",
+    "Ordre": 1,
+    "Publie_par": "Exemple fictif"
+   },
+   {
+    "id": 2,
+    "Titre": "Panne du logiciel de rendez-vous",
+    "Detail": "Prendre les rendez-vous sur le tableau partagé jusqu'à la réparation.",
+    "Type": "Point chaud",
+    "Equipe": "Accueil",
+    "Debut": "J-1",
+    "Fin": "J+3",
+    "Ordre": 1,
+    "Publie_par": "Exemple fictif"
+   },
+   {
+    "id": 3,
+    "Titre": "Clôture des comptes du trimestre",
+    "Detail": "",
+    "Type": "Priorité",
+    "Equipe": "Gestion",
+    "Debut": "J-10",
+    "Fin": "J+10",
+    "Ordre": 1,
+    "Publie_par": "Exemple fictif"
+   },
+   {
+    "id": 4,
+    "Titre": "Nouveau circuit de validation des congés",
+    "Detail": "Applicable à toute la direction à partir de lundi.",
+    "Type": "Priorité",
+    "Equipe": "",
+    "Debut": "J-3",
+    "Fin": "J+20",
+    "Ordre": 2,
+    "Publie_par": "Exemple fictif"
+   }
+  ],
+  "Tensions_charge": [
+   {
+    "id": 1,
+    "Semaine": "S-5",
+    "Equipe": "Accueil",
+    "Tension": "Normale",
+    "Commentaire": "",
+    "Qualifie_par": "Exemple fictif"
+   },
+   {
+    "id": 2,
+    "Semaine": "S-4",
+    "Equipe": "Accueil",
+    "Tension": "Normale",
+    "Commentaire": "",
+    "Qualifie_par": "Exemple fictif"
+   },
+   {
+    "id": 3,
+    "Semaine": "S-3",
+    "Equipe": "Accueil",
+    "Tension": "Tendue",
+    "Commentaire": "",
+    "Qualifie_par": "Exemple fictif"
+   },
+   {
+    "id": 4,
+    "Semaine": "S-2",
+    "Equipe": "Accueil",
+    "Tension": "Tendue",
+    "Commentaire": "",
+    "Qualifie_par": "Exemple fictif"
+   },
+   {
+    "id": 5,
+    "Semaine": "S-1",
+    "Equipe": "Accueil",
+    "Tension": "Critique",
+    "Commentaire": "",
+    "Qualifie_par": "Exemple fictif"
+   },
+   {
+    "id": 6,
+    "Semaine": "S-0",
+    "Equipe": "Accueil",
+    "Tension": "Tendue",
+    "Commentaire": "Campagne d'inscriptions et panne du logiciel de rendez-vous",
+    "Qualifie_par": "Exemple fictif"
+   },
+   {
+    "id": 7,
+    "Semaine": "S-5",
+    "Equipe": "Gestion",
+    "Tension": "Normale",
+    "Commentaire": "",
+    "Qualifie_par": "Exemple fictif"
+   },
+   {
+    "id": 8,
+    "Semaine": "S-4",
+    "Equipe": "Gestion",
+    "Tension": "Normale",
+    "Commentaire": "",
+    "Qualifie_par": "Exemple fictif"
+   },
+   {
+    "id": 9,
+    "Semaine": "S-3",
+    "Equipe": "Gestion",
+    "Tension": "Normale",
+    "Commentaire": "",
+    "Qualifie_par": "Exemple fictif"
+   },
+   {
+    "id": 10,
+    "Semaine": "S-2",
+    "Equipe": "Gestion",
+    "Tension": "Tendue",
+    "Commentaire": "",
+    "Qualifie_par": "Exemple fictif"
+   },
+   {
+    "id": 11,
+    "Semaine": "S-1",
+    "Equipe": "Gestion",
+    "Tension": "Normale",
+    "Commentaire": "",
+    "Qualifie_par": "Exemple fictif"
+   },
+   {
+    "id": 12,
+    "Semaine": "S-0",
+    "Equipe": "Gestion",
+    "Tension": "Normale",
+    "Commentaire": "",
+    "Qualifie_par": "Exemple fictif"
+   }
+  ],
+  "Charge": [
+   {
+    "id": 1,
+    "Semaine": "S-0",
+    "Equipe": "Accueil",
+    "Niveau": "Chargé",
+    "Raison": "Trop d'appels pendant la campagne",
+    "Nominatif": false,
+    "Nom": "",
+    "Saisi_par": "p0",
+    "Retenue": true
+   },
+   {
+    "id": 2,
+    "Semaine": "S-0",
+    "Equipe": "Accueil",
+    "Niveau": "Débordé",
+    "Raison": "Deux absences non remplacées",
+    "Nominatif": true,
+    "Nom": "Camille Martin",
+    "Saisi_par": "p1",
+    "Retenue": true
+   },
+   {
+    "id": 3,
+    "Semaine": "S-0",
+    "Equipe": "Accueil",
+    "Niveau": "Chargé",
+    "Raison": "La panne du logiciel double la saisie",
+    "Nominatif": false,
+    "Nom": "",
+    "Saisi_par": "p2",
+    "Retenue": true
+   },
+   {
+    "id": 4,
+    "Semaine": "S-0",
+    "Equipe": "Accueil",
+    "Niveau": "Confortable",
+    "Raison": "",
+    "Nominatif": false,
+    "Nom": "",
+    "Saisi_par": "p3",
+    "Retenue": true
+   },
+   {
+    "id": 5,
+    "Semaine": "S-0",
+    "Equipe": "Accueil",
+    "Niveau": "Débordé",
+    "Raison": "",
+    "Nominatif": false,
+    "Nom": "",
+    "Saisi_par": "p4",
+    "Retenue": true
+   },
+   {
+    "id": 6,
+    "Semaine": "S-1",
+    "Equipe": "Accueil",
+    "Niveau": "Chargé",
+    "Raison": "",
+    "Nominatif": false,
+    "Nom": "",
+    "Saisi_par": "p0",
+    "Retenue": true
+   },
+   {
+    "id": 7,
+    "Semaine": "S-1",
+    "Equipe": "Accueil",
+    "Niveau": "Chargé",
+    "Raison": "",
+    "Nominatif": false,
+    "Nom": "",
+    "Saisi_par": "p1",
+    "Retenue": true
+   },
+   {
+    "id": 8,
+    "Semaine": "S-1",
+    "Equipe": "Accueil",
+    "Niveau": "Confortable",
+    "Raison": "",
+    "Nominatif": false,
+    "Nom": "",
+    "Saisi_par": "p2",
+    "Retenue": true
+   },
+   {
+    "id": 9,
+    "Semaine": "S-1",
+    "Equipe": "Accueil",
+    "Niveau": "Confortable",
+    "Raison": "",
+    "Nominatif": false,
+    "Nom": "",
+    "Saisi_par": "p3",
+    "Retenue": true
+   },
+   {
+    "id": 10,
+    "Semaine": "S-2",
+    "Equipe": "Accueil",
+    "Niveau": "Confortable",
+    "Raison": "",
+    "Nominatif": false,
+    "Nom": "",
+    "Saisi_par": "p0",
+    "Retenue": true
+   },
+   {
+    "id": 11,
+    "Semaine": "S-2",
+    "Equipe": "Accueil",
+    "Niveau": "Chargé",
+    "Raison": "",
+    "Nominatif": false,
+    "Nom": "",
+    "Saisi_par": "p1",
+    "Retenue": true
+   },
+   {
+    "id": 12,
+    "Semaine": "S-2",
+    "Equipe": "Accueil",
+    "Niveau": "Confortable",
+    "Raison": "",
+    "Nominatif": false,
+    "Nom": "",
+    "Saisi_par": "p2",
+    "Retenue": true
+   },
+   {
+    "id": 13,
+    "Semaine": "S-2",
+    "Equipe": "Accueil",
+    "Niveau": "Confortable",
+    "Raison": "",
+    "Nominatif": false,
+    "Nom": "",
+    "Saisi_par": "p3",
+    "Retenue": true
    }
   ]
  },

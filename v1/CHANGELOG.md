@@ -2,6 +2,20 @@
 
 Les adresses `/v1/` ne changent pas : chaque version ajoute ou corrige, sans retirer ce qui existe.
 
+## 2026-11-28 (deux niveaux : équipe et pilotage)
+- Deux niveaux dans un même document : chaque vue Personnalisée choisit le niveau **Équipe** ou **Pilotage** et son équipe (*Réglages › Général › Cette vue Grist*, option de la vue Grist, comme l'éditeur ou la page d'usage). À l'installation, le niveau de la vue se choisit avant de créer les tables.
+- Niveau Équipe : nouvelle zone **Priorités et points chauds** (table `Priorites`, publiées par le manager, avec date de fin) ; signalements, actions et météo filtrés par équipe (une ligne sans équipe vaut pour toutes) ; décisions du point notées comme actions dans `Actions_reunion` ; nouvelle zone **Charge de travail vécue** (table `Charge`, désactivée par défaut, avertissement sur l'avis du délégué à la protection des données) : répartition de la semaine, raisons sans nom sauf choix de l'agent, tendance des dernières semaines, une réponse par personne et par semaine ; nouvelle zone **Tension de charge**, qualifiée par le manager pour le pilotage (table `Tensions_charge`).
+- Niveau Pilotage : zones **Escalades et arbitrages** (signalements escaladés au-delà de l'équipe et demandes d'arbitrage) et **Tension par équipe** (équipes × semaines) ; chiffres clés propres au pilotage. La table `Charge` n'est jamais lue à ce niveau.
+- Signalements : colonnes `Equipe` et `Nature` (Problème, Demande d'arbitrage).
+- Météo facultative : case *Afficher la météo du jour* ; masquée pour un nouvel espace, gardée telle quelle pour un document existant.
+- Écrans composés à la main propres à chaque niveau (`ecrans` et `ecransPilotage` dans la configuration).
+- Document existant : bouton *Ajouter les tables et colonnes des deux niveaux* ; bouton *Préparer l'affectation des équipes* (colonnes `Email` et `Equipe` de `Personnes`, ou création de la table). Rien n'est retiré ni renommé.
+- *Réglages › Données* : règles d'accès proposées et installables (charge vécue, lecture par équipe avec un attribut d'utilisateur `Membre`, pilotage limité aux escalades et arbitrages). Fichier partagé `commun/donnees.js` : prise en charge des attributs d'utilisateur.
+- Page publique : jamais de charge vécue ni de tension de charge, même si un écran les contient ; ces tables ne sont pas lues.
+- Correction : les cases à cocher de premier niveau des réglages (*Afficher le samedi et le dimanche*) provoquaient une erreur et n'étaient pas prises en compte.
+- Après l'installation ou l'enregistrement, les réglages se mettent à jour (équipes proposées, tables à ajouter).
+- Démonstration : deux équipes fictives, priorités, charge et tension ; `?niveau=pilotage` pour voir le niveau Pilotage.
+
 ## 2026-11-28 (statut de l'éditeur)
 - Barre de l'éditeur : le statut affiche « Non enregistré » (au lieu de « Modifications non enregistrées »), plus court ; la barre ne passe plus sur deux lignes sur un écran étroit.
 
