@@ -245,7 +245,9 @@
 
   function chargerGrist() {
     return Promise.all([grist.docApi.fetchTable('_grist_Tables'), grist.docApi.fetchTable('_grist_Tables_column'),
-      grist.docApi.fetchTable('_grist_ACLResources').catch(function () { return { id: [] }; })]).then(function (m) {
+      grist.docApi.fetchTable('_grist_ACLResources').catch(function () { return { id: [] }; }),
+      grist.docApi.fetchTable('_grist_Views_section').catch(function () { return null; })]).then(function (m) {
+      meta.sections = m[3] ? enLignes(m[3]) : null;
       meta.tables = enLignes(m[0]).filter(function (t) { return !/^_grist/.test(t.tableId); });
       meta.colonnes = enLignes(m[1]);
       // Grist ne transmet les règles d'accès qu'aux personnes qui ont tous les droits (propriétaires, ou document sans règles).
@@ -1047,8 +1049,25 @@
       effet: 'l\'équipe des managers répond aux escalades sans créer de signalement au nom d\'une équipe' });
     return r;
   }
+  // Un formulaire Grist publié écrit toutes les colonnes de sa table sans tenir compte des règles d'accès :
+  // publié sur une table de l'outil, il laisserait n'importe qui escalader, écrire au nom d'une équipe ou s'affecter.
+  function formulairesPublies() {
+    if (!meta.sections) return [];
+    return ['Meteo', 'Signalements', 'Priorites', 'Tensions_charge', 'Charge', 'Actions_reunion', AFFECT].filter(function (t) {
+      var tb = meta.tables.filter(function (x) { return x.tableId === t; })[0];
+      return tb && meta.sections.some(function (sec) {
+        if (sec.tableRef !== tb.id || sec.parentKey !== 'form') return false;
+        try { var o = JSON.parse(sec.shareOptions || '{}'); return !!(o.publish && o.form); } catch (e) { return false; }
+      });
+    });
+  }
+  function alerteFormulaires() {
+    var f = formulairesPublies();
+    return f.length ? '<div class="fr-alert fr-alert--warning fr-alert--sm fr-mb-2w"><p>Un formulaire Grist est publié sur ' + f.map(function (t) { return '<code>' + t + '</code>'; }).join(', ') +
+      '. Grist laisse un formulaire publié écrire toutes les colonnes de sa table, sans tenir compte des règles d\'accès : n\'importe qui peut alors escalader un signalement, écrire au nom d\'une équipe ou modifier les affectations. Dépubliez-le.</p></div>' : '';
+  }
   function optionsDonnees() { return { demo: DEMO, tables: ['Meteo', 'Signalements', 'Priorites', 'Tensions_charge', 'Charge', 'Actions_reunion', AFFECT], partage: PARTAGE, regles: reglesAcces(), anciens: ANCIENS_MEMOS, liens: LIENS,
-    noteRegles: 'Les règles par équipe s\'appuient sur la table <code>Affectations</code> (Réglages › Général, Deux niveaux) : une ligne par personne, avec son adresse, ses équipes et les équipes dont elle est manager. Renseignez-la avant d\'installer les règles. Une personne sans affectation ne lit que les lignes sans équipe. Les propriétaires du document gardent tous les droits : réservez ce rôle aux personnes qui administrent le document. Après installation, vérifiez avec <strong>Voir en tant que</strong>.' }; }
+    noteRegles: alerteFormulaires() + 'Les règles par équipe s\'appuient sur la table <code>Affectations</code> (Réglages › Général, Deux niveaux) : une ligne par personne, avec son adresse, ses équipes et les équipes dont elle est manager. Renseignez-la avant d\'installer les règles. Une personne sans affectation ne lit que les lignes sans équipe. Les propriétaires du document gardent tous les droits : réservez ce rôle aux personnes qui administrent le document. Après installation, vérifiez avec <strong>Voir en tant que</strong>.' }; }
   function rendreDonnees(zone) {
     if (!window.DonneesLab) { zone.innerHTML = ''; return; }
     if (!DEMO && !aclDonnees) DonneesLab.lire().then(function (a) { aclDonnees = a; if (configLab) configLab.rafraichir('donnees'); });

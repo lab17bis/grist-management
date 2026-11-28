@@ -2,6 +2,10 @@
 
 Les adresses `/v1/` ne changent pas : chaque version ajoute ou corrige, sans retirer ce qui existe.
 
+
+## 2026-11-28 (formulaire public)
+- Le README ne conseille plus de brancher un formulaire public sur `Signalements` : Grist laisse un formulaire publié écrire toutes les colonnes de sa table, sans tenir compte des règles d'accès, ce qui permettait à n'importe qui d'escalader un signalement jusqu'au pilotage ou d'écrire au nom d'une équipe.
+- *Réglages › Données* signale un formulaire Grist publié sur une table de l'outil (`Signalements`, `Priorites`, `Charge`, `Affectations`…).
 ## 2026-11-28 (affectations : rôle de manager, plusieurs équipes par personne)
 - Nouvelle table **`Affectations`** (une ligne par personne : `Email`, `Nom`, `Equipes`, `Manager_de`), créée à l'installation ou par le bouton *Créer la table Affectations*. Une personne peut appartenir à plusieurs équipes (par exemple son bureau et l'équipe des managers) ; être manager d'une équipe vaut appartenance.
 - **Faille corrigée** : la version précédente s'appuyait sur `Personnes.Equipe`, modifiable par un éditeur autorisé à corriger sa fiche, qui pouvait ainsi se placer dans l'équipe des managers. `Affectations` n'est modifiable que par les propriétaires.

@@ -90,7 +90,7 @@ Colonnes ajoutées aux tables existantes, sans rien retirer : `Meteo.Equipe`, `A
 
 Les valeurs de `Statut`, `Gravite`, `Nature`, `Type`, `Tension` et `Niveau` sont utilisées par le code : ne les renommez pas.
 
-Pour signaler un problème sans être connecté au document, branchez [grist-questionnaire](https://github.com/lab17bis/grist-questionnaire) sur la table `Signalements`.
+**Ne publiez pas de formulaire sur les tables de l'outil** (`Signalements`, `Priorites`, `Charge`, `Affectations`…) : Grist laisse un formulaire publié écrire toutes les colonnes de sa table, sans tenir compte des règles d'accès. N'importe qui pourrait alors escalader un signalement jusqu'au pilotage, écrire au nom d'une équipe ou se déclarer manager. *Réglages › Données* le signale si c'est le cas. Pour un signalement sans compte, demandez à la personne d'écrire à l'équipe, qui le saisit.
 
 ## Le reprendre et l'adapter
 
