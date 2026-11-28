@@ -312,9 +312,12 @@
       return DEMO ? null : charger();
     }).then(rendre).catch(function (err) {
       // Refus d'une règle d'accès : Grist transmet le message de la règle (memo), plus parlant que le détail technique.
-      var memos = err && err.details && err.details.memos;
-      etat.alerte = { type: 'error', texte: memos && memos.length ? 'Enregistrement refusé : ' + memos.join(' ') :
-        'Enregistrement refusé par Grist. Vérifiez vos droits sur le document. (' + ((err && err.message) || err) + ')' };
+      var memos = ((err && err.details && err.details.memos) || []).map(function (m) { return typeof m === 'string' ? m : (m && m.text) || ''; })
+        .filter(function (m, i, l) { return m && l.indexOf(m) === i; });
+      var msg = String((err && err.message) || err);
+      etat.alerte = { type: 'error', texte: memos.length ? 'Enregistrement refusé : ' + memos.join(' ') :
+        /access rules/i.test(msg) ? 'Enregistrement refusé par les règles d\'accès du document : vos équipes ou votre rôle (table Affectations) ne le permettent pas.' :
+        'Enregistrement refusé par Grist. Vérifiez vos droits sur le document. (' + msg + ')' };
       rendre();
     });
   }
@@ -1001,16 +1004,19 @@
         memo: 'On ne modifie pas la réponse d\'une autre personne', effet: 'on ne modifie ni ne retire la réponse d\'une autre personne' }];
     if (!affectationsPretes() || !deuxNiveauxPrets()) return r;
     var P = texteFormule(nomPilote()), E0 = texteFormule(C.escalade[0]), ARB = texteFormule(NATURES[1]);
-    var EQ = 'user.Membre.Equipes', MD = 'user.Membre.Manager_de', PIL = P + ' in ' + EQ;
-    var hors = function (x) { return x + '.Equipe and ' + x + '.Equipe not in ' + EQ; };
+    // Membre d'une équipe : elle figure dans ses équipes ou dans les équipes dont il est manager.
+    var EQ = 'user.Membre.Equipes', MD = 'user.Membre.Manager_de';
+    var dans = function (v) { return '(' + v + ' in ' + EQ + ' or ' + v + ' in ' + MD + ')'; };
+    var PIL = dans(P);
+    var hors = function (x) { return x + '.Equipe and not ' + dans(x + '.Equipe'); };
     r.unshift({ attribut: { name: 'Membre', tableId: AFFECT, lookupColId: 'Email', charId: 'Email' }, effet: 'la ligne de la personne connectée dans la table Affectations (par son adresse, sans tenir compte des majuscules) : ses équipes et les équipes dont elle est manager' });
     r.push({ table: AFFECT, cols: '*', formule: NP, droits: '-CUD', memo: 'Seuls les propriétaires du document affectent les personnes aux équipes',
       effet: 'seuls les propriétaires ajoutent, modifient ou retirent une affectation : personne ne peut s\'ajouter à une équipe ni se déclarer manager' });
     r.push({ table: AFFECT, cols: 'Equipes,Manager_de', formule: NP + ' and not (rec.Email and user.Email and rec.Email.lower() == user.Email.lower())', droits: '-R',
       memo: 'Les affectations des autres personnes ne sont pas visibles', effet: 'chaque personne ne voit que ses propres équipes et son rôle de manager' });
-    r.push({ table: 'Charge', cols: '*', formule: NP + ' and rec.Equipe not in ' + EQ, droits: '-RUD',
+    r.push({ table: 'Charge', cols: '*', formule: NP + ' and not ' + dans('rec.Equipe'), droits: '-RUD',
       memo: 'La charge vécue n\'est lue que par l\'équipe concernée', effet: 'la charge vécue n\'est lue que par l\'équipe concernée, jamais par le pilotage' });
-    r.push({ table: 'Charge', cols: '*', formule: NP + ' and newRec.Equipe not in ' + EQ, droits: '-CU',
+    r.push({ table: 'Charge', cols: '*', formule: NP + ' and not ' + dans('newRec.Equipe'), droits: '-CU',
       memo: 'On ne répond sur la charge que pour une de ses équipes', effet: 'on ne répond que pour une de ses équipes' });
     ['Meteo', 'Priorites', 'Tensions_charge', 'Actions_reunion'].forEach(function (t) {
       r.push({ table: t, cols: '*', formule: NP + ' and not ' + PIL + ' and ' + hors('rec'), droits: '-R', memo: 'Ligne d\'une équipe dont vous n\'êtes pas membre',
@@ -1027,7 +1033,7 @@
         effet: t === 'Priorites' ? 'seuls les managers de l\'équipe publient et modifient ses priorités (sans équipe : les managers de l\'équipe des managers)' : 'seuls les managers de l\'équipe qualifient sa tension de charge' });
       r.push({ table: t, cols: '*', formule: NP + ' and not ' + qui('rec'), droits: '-D', memo: quoi, effet: 'seuls ces managers les retirent' });
     });
-    r.push({ table: 'Signalements', cols: '*', formule: NP + ' and ' + PIL + ' and rec.Equipe not in ' + EQ + ' and (not rec.Escalade or rec.Escalade == ' + E0 + ') and rec.Nature != ' + ARB, droits: '-RU',
+    r.push({ table: 'Signalements', cols: '*', formule: NP + ' and ' + PIL + ' and not ' + dans('rec.Equipe') + ' and (not rec.Escalade or rec.Escalade == ' + E0 + ') and rec.Nature != ' + ARB, droits: '-RU',
       memo: 'Le pilotage ne voit que ce que les équipes escaladent', effet: 'l\'équipe des managers ne lit des autres équipes que les signalements escaladés et les demandes d\'arbitrage (et les traite)' });
     r.push({ table: 'Signalements', cols: '*', formule: NP + ' and not ' + PIL + ' and ' + hors('rec'), droits: '-RUD', memo: 'Signalement d\'une équipe dont vous n\'êtes pas membre',
       effet: 'chaque personne ne lit et ne modifie que les signalements de ses équipes (et ceux sans équipe)' });
