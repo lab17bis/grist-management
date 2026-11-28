@@ -70,6 +70,12 @@ with sync_playwright() as p:
     verifier('équipes : choix de la colonne Equipe mis à jour', all(choix(t[x]['colonnes']['Equipe']) == ['Accueil', 'Gestion'] for x in ['Signalements', 'Meteo', 'Priorites', 'Tensions_charge', 'Charge']))
     cfg = json.loads(t['Meteo']['colonnes']['Config_management'].get('description') or '{}')
     verifier('réglages enregistrés : équipes et charge', cfg.get('equipes') == ['Accueil', 'Gestion'] and cfg.get('charge') is True)
+    verifier('réglages enregistrés : écrans automatiques non figés', 'ecrans' not in cfg and 'ecransPilotage' not in cfg and '_ecransAuto' not in cfg)
+    f.locator('.cl-barre label', has_text='Aperçu').click(); pg.wait_for_timeout(600)
+    verifier('charge activée : la zone apparaît dans les écrans automatiques', f.locator('[data-ecran]', has_text='Charge').count() == 1)
+    f.locator('[data-ecran]', has_text='Charge').click(); pg.wait_for_timeout(400)
+    verifier('charge activée : zone de la charge vécue affichée', f.locator('.mg-zone--charge').count() == 1)
+    f.locator('.cl-barre label', has_text='Réglages').click(); f.locator('#rg-eq').wait_for()
     # Choix de l'équipe de cette vue
     f.locator('#vue-equipe').select_option('Gestion'); f.get_by_role('button', name='Appliquer à cette vue').click(); pg.wait_for_timeout(1000)
     o = doc(pg).get('options') or {}
@@ -78,6 +84,9 @@ with sync_playwright() as p:
     f.get_by_role('button', name="Préparer l'affectation des équipes").click(); pg.wait_for_timeout(1200)
     t = doc(pg)['tables']
     verifier('personnes : table Personnes avec Email et Equipe (équipes et managers)', 'Personnes' in t and 'Email' in t['Personnes']['colonnes'] and choix(t['Personnes']['colonnes']['Equipe']) == ['Accueil', 'Gestion', 'Pilotage'])
+    f.locator('#re-0').fill('Écran retouché'); f.get_by_role('button', name='Enregistrer', exact=True).first.click(); pg.wait_for_timeout(1200)
+    cfg = json.loads(doc(pg)['tables']['Meteo']['colonnes']['Config_management']['description'])
+    verifier('écrans retouchés : enregistrés pour le niveau Équipe', (cfg.get('ecrans') or [{}])[0].get('titre') == 'Écran retouché' and 'ecransPilotage' not in cfg)
     verifier('document existant : aucune erreur', not err)
     avecPersonnes = copy.deepcopy(t); pg.close()
 

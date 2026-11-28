@@ -16,6 +16,7 @@ Les adresses `/v1/` ne changent pas : chaque version ajoute ou corrige, sans ret
 - Après l'installation ou l'enregistrement, les réglages se mettent à jour (équipes proposées, tables à ajouter).
 - Les colonnes ajoutées à une table existante sont des colonnes de saisie (et non des colonnes de formule vides, comportement par défaut de Grist).
 - Écran d'installation : il annonce les quatre tables créées.
+- Enregistrer les réglages ne fige plus les écrans automatiques : tant qu'ils ne sont pas retouchés, la composition suit le document (par exemple, la zone de charge vécue apparaît quand on l'active). Constaté dans Grist.
 - Démonstration : deux équipes fictives, priorités, charge et tension ; `?niveau=pilotage` pour voir le niveau Pilotage.
 
 ## 2026-11-28 (statut de l'éditeur)

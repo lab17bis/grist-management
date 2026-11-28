@@ -189,9 +189,12 @@
       .filter(function (x) { return x.zones.length; });
   }
   function versReglages(b) {
-    var r = JSON.parse(JSON.stringify(b));
+    var r = JSON.parse(JSON.stringify(b)), auto = r._ecransAuto;
+    delete r._ecransAuto;
+    // Écrans automatiques non retouchés : rien n'est figé, la composition suit le document (charge activée, nouvelles tables…).
+    if (auto && JSON.stringify(r.ecrans) === auto) delete r.ecrans;
     if (pilotage()) {
-      r.ecransPilotage = r.ecrans;
+      if (r.ecrans) r.ecransPilotage = r.ecrans; else delete r.ecransPilotage;
       if (Array.isArray((reglages || {}).ecrans)) r.ecrans = JSON.parse(JSON.stringify(reglages.ecrans)); else delete r.ecrans;
     }
     return r;
@@ -984,6 +987,7 @@
       brouillon = JSON.parse(JSON.stringify(reglages || {}));
       var e = brouillon[cleEcrans()];
       brouillon.ecrans = JSON.parse(JSON.stringify(Array.isArray(e) && e.length ? e : ecransAuto()));
+      if (!(Array.isArray(e) && e.length)) brouillon._ecransAuto = JSON.stringify(brouillon.ecrans);
       delete brouillon.ecransPilotage;
     }
   }
@@ -1209,7 +1213,7 @@
       else if (ra === 'monter' && idx > 0) { var arr = chemin(brouillon, l); arr.splice(idx - 1, 0, arr.splice(idx, 1)[0]); }
       else if (ra === 'ajouter-zone') { brouillon.ecrans[idx].zones = brouillon.ecrans[idx].zones || []; brouillon.ecrans[idx].zones.push({ type: 'texte', largeur: 6 }); }
       else if (ra === 'ajouter-ecran') brouillon.ecrans.push({ titre: 'Nouvel écran', zones: [] });
-      else if (ra === 'auto') brouillon.ecrans = JSON.parse(JSON.stringify(ecransAuto()));
+      else if (ra === 'auto') { brouillon.ecrans = JSON.parse(JSON.stringify(ecransAuto())); brouillon._ecransAuto = JSON.stringify(brouillon.ecrans); }
       rendreReglagesEnGardant();
     }
   });
