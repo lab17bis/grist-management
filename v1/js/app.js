@@ -539,7 +539,7 @@
     var total = lignes.length;
     return '<ul class="mg-repartition">' + NIVEAUX_CHARGE.map(function (n) {
       var k = lignes.filter(function (c) { return c.Niveau === n.nom; }).length, pc = total ? Math.round(100 * k / total) : 0;
-      return '<li class="mg-repartition__el"><span class="mg-pastille mg-statut--' + n.code + '" aria-hidden="true">' + n.symbole + '</span> <strong>' + esc(n.nom) + '</strong> : ' + k +
+      return '<li class="mg-repartition__el"><span class="mg-pastille mg-statut--' + n.code + '" aria-hidden="true">' + n.symbole + '</span><span><strong>' + esc(n.nom) + '</strong> : ' + k + (total ? ' (' + pc + '\u00a0%)' : '') + '</span>' +
         '<span class="mg-barre-pc" aria-hidden="true"><span class="mg-statut--' + n.code + '" style="width:' + pc + '%"></span></span></li>';
     }).join('') + '</ul>';
   }

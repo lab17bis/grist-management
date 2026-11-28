@@ -17,6 +17,8 @@ Les adresses `/v1/` ne changent pas : chaque version ajoute ou corrige, sans ret
 - Les colonnes ajoutées à une table existante sont des colonnes de saisie (et non des colonnes de formule vides, comportement par défaut de Grist).
 - Écran d'installation : il annonce les quatre tables créées.
 - Enregistrer les réglages ne fige plus les écrans automatiques : tant qu'ils ne sont pas retouchés, la composition suit le document (par exemple, la zone de charge vécue apparaît quand on l'active). Constaté dans Grist.
+- Charge vécue : chaque niveau affiche son nombre de réponses et sa part (en %) sur une ligne.
+- Vérifié dans Grist (document de test, *Voir en tant que*) : un agent de l'équipe Accueil ne lit que la charge et les signalements de son équipe, ne voit pas l'auteur des réponses anonymes et enregistre sa propre réponse ; le pilotage ne lit aucune ligne de `Charge` et voit les escalades, les arbitrages et la tension de toutes les équipes.
 - Démonstration : deux équipes fictives, priorités, charge et tension ; `?niveau=pilotage` pour voir le niveau Pilotage.
 
 ## 2026-11-28 (statut de l'éditeur)
