@@ -762,7 +762,7 @@
 
   function vueInstallation() {
     return '<h1 class="fr-h3">Installer l\'espace de management visuel</h1>' + blocAlerte() +
-      '<p>Le widget va créer quatre tables dans ce document : <code>Meteo</code> (la météo du jour par rubrique, facultative), <code>Signalements</code> (les problèmes, les demandes d\'arbitrage et leur escalade), <code>Priorites</code> (priorités et points chauds) et <code>Tensions_charge</code> (la tension de charge de chaque équipe, pour le pilotage).' +
+      '<p>Le widget va créer cinq tables dans ce document : <code>Meteo</code> (la météo du jour par rubrique, facultative), <code>Signalements</code> (les problèmes, les demandes d\'arbitrage et leur escalade), <code>Priorites</code> (priorités et points chauds), <code>Tensions_charge</code> (la tension de charge de chaque équipe, pour le pilotage) et <code>Affectations</code> (les équipes de chaque personne et les managers, pour les règles d\'accès).' +
       (aTable('Meteo') || aTable('Signalements') ? ' La table déjà présente est gardée : le widget lui ajoute seulement les colonnes qui lui manquent, rien n\'est renommé ni supprimé.</p><p class="fr-text--sm">' + CONSEIL_RENOMMER + '</p>' : ' Les tables existantes ne sont pas modifiées.</p>') +
       '<p>Il affichera aussi, s\'ils sont dans ce document, les tableaux de bord de <strong>grist-graphique</strong>, les réunions et actions de <strong>grist-reunion</strong> et les projets de <strong>grist-projet</strong>.</p>' +
       '<fieldset class="fr-fieldset"><legend class="fr-fieldset__legend">Niveau de cette vue</legend>' +
@@ -1012,6 +1012,8 @@
     r.unshift({ attribut: { name: 'Membre', tableId: AFFECT, lookupColId: 'Email', charId: 'Email' }, effet: 'la ligne de la personne connectée dans la table Affectations (par son adresse, sans tenir compte des majuscules) : ses équipes et les équipes dont elle est manager' });
     r.push({ table: AFFECT, cols: '*', formule: NP, droits: '-CUD', memo: 'Seuls les propriétaires du document affectent les personnes aux équipes',
       effet: 'seuls les propriétaires ajoutent, modifient ou retirent une affectation : personne ne peut s\'ajouter à une équipe ni se déclarer manager' });
+    r.push({ table: AFFECT, cols: '*', formule: NP + ' and not user.Membre.Email', droits: '-R', memo: 'Les affectations ne sont visibles que par les personnes affectées',
+      effet: 'une personne sans affectation (et un visiteur d\'un document public) ne lit pas la table des affectations' });
     r.push({ table: AFFECT, cols: 'Equipes,Manager_de', formule: NP + ' and not (rec.Email and user.Email and rec.Email.lower() == user.Email.lower())', droits: '-R',
       memo: 'Les affectations des autres personnes ne sont pas visibles', effet: 'chaque personne ne voit que ses propres équipes et son rôle de manager' });
     r.push({ table: 'Charge', cols: '*', formule: NP + ' and not ' + dans('rec.Equipe'), droits: '-RUD',

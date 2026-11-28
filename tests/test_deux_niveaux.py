@@ -139,6 +139,7 @@ with sync_playwright() as p:
             except Exception as e: erreurs.append((r['aclFormula'], e))
     verifier('règles : toutes les formules sont acceptées par l\'analyseur de Grist', not erreurs and len([r for r in acl['regles'] if r.get('aclFormula')]) >= 25)
     verifier('règles : affectations modifiables par les seuls propriétaires', a('Affectations', '-CUD', 'user.Access != OWNER'))
+    verifier('règles : affectations illisibles sans affectation (visiteur d\'un document public)', a('Affectations', '-R', 'not user.Membre.Email'))
     verifier('règles : chacun ne voit que ses propres équipes et son rôle', a('Affectations', '-R', 'rec.Email.lower() == user.Email.lower()', cols='Equipes,Manager_de'))
     verifier('règles : auteur d\'une réponse de charge masqué', a('Charge', '-R', 'rec.Nominatif', cols='Saisi_par,Nom'))
     verifier('règles : charge lue par la seule équipe concernée (plusieurs équipes possibles)', a('Charge', '-RUD', 'not (rec.Equipe in user.Membre.Equipes or rec.Equipe in user.Membre.Manager_de)'))
