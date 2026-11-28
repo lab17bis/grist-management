@@ -2,6 +2,17 @@
 
 Les adresses `/v1/` ne changent pas : chaque version ajoute ou corrige, sans retirer ce qui existe.
 
+## 2026-11-28 (affectations : rôle de manager, plusieurs équipes par personne)
+- Nouvelle table **`Affectations`** (une ligne par personne : `Email`, `Nom`, `Equipes`, `Manager_de`), créée à l'installation ou par le bouton *Créer la table Affectations*. Une personne peut appartenir à plusieurs équipes (par exemple son bureau et l'équipe des managers) ; être manager d'une équipe vaut appartenance.
+- **Faille corrigée** : la version précédente s'appuyait sur `Personnes.Equipe`, modifiable par un éditeur autorisé à corriger sa fiche, qui pouvait ainsi se placer dans l'équipe des managers. `Affectations` n'est modifiable que par les propriétaires.
+- **Rôle de manager** : seuls les managers d'une équipe publient, modifient et retirent ses priorités et qualifient sa tension de charge ; une priorité sans équipe est publiée par les managers de l'équipe des managers. Le widget n'affiche ces formulaires qu'aux managers concernés.
+- Règles par équipe complétées : personne n'écrit au nom d'une équipe dont il n'est pas membre ; l'équipe des managers lit toutes les équipes sans modifier leurs lignes et traite les escalades ; `Actions_reunion` filtrée par équipe ; affectations illisibles pour une personne non affectée et pour le visiteur d'un document public ; chacun ne voit que ses propres équipes et son rôle.
+- Documents préparés avec la version précédente : bouton *Reprendre ces équipes dans Affectations* (copie de `Personnes.Equipe`, `Personnes` inchangée) et bouton *Mettre à jour les règles d'accès* (remplace les règles de la version précédente de l'outil, garde celles posées par ailleurs). Fichier partagé `commun/donnees.js` : mise à jour des règles d'une version précédente et des attributs d'utilisateur.
+- Refus de Grist : le widget affiche le message de la règle d'accès au lieu du message technique.
+- Vue sans équipe : on n'y qualifie plus de tension ni ne répond sur la charge (une ligne sans équipe n'était lue que par les propriétaires).
+- Les tables créées par l'outil ont des colonnes de saisie (et non des colonnes de formule vides, défaut de Grist).
+- Vérifié dans Grist avec *Voir en tant que* : agent, manager, cheffe de bureau membre de deux équipes, responsable du pilotage, adresse saisie avec des majuscules, mise à jour depuis les règles précédentes, document d'espace importé portant déjà d'autres règles.
+
 ## 2026-11-28 (deux niveaux : équipe et pilotage)
 - Deux niveaux dans un même document : chaque vue Personnalisée choisit le niveau **Équipe** ou **Pilotage** et son équipe (*Réglages › Général › Cette vue Grist*, option de la vue Grist, comme l'éditeur ou la page d'usage). À l'installation, le niveau de la vue se choisit avant de créer les tables.
 - Niveau Équipe : nouvelle zone **Priorités et points chauds** (table `Priorites`, publiées par le manager, avec date de fin) ; signalements, actions et météo filtrés par équipe (une ligne sans équipe vaut pour toutes) ; décisions du point notées comme actions dans `Actions_reunion` ; nouvelle zone **Charge de travail vécue** (table `Charge`, désactivée par défaut, avertissement sur l'avis du délégué à la protection des données) : répartition de la semaine, raisons sans nom sauf choix de l'agent, tendance des dernières semaines, une réponse par personne et par semaine ; nouvelle zone **Tension de charge**, qualifiée par le manager pour le pilotage (table `Tensions_charge`).

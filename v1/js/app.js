@@ -204,11 +204,11 @@
   // Chargement
   // ---------------------------------------------------------------------------
 
-  var TABLES_LUES = ['Meteo', 'Signalements', 'Reunions', 'Points', 'Actions_reunion', 'Projets', 'Actions', 'Personnes', 'Priorites', 'Tensions_charge', 'Charge'];
-  // Tables jamais lues : la charge vécue au niveau Pilotage (réponses individuelles) ; charge et tension sur une page publique.
+  var TABLES_LUES = ['Meteo', 'Signalements', 'Reunions', 'Points', 'Actions_reunion', 'Projets', 'Actions', 'Personnes', 'Priorites', 'Tensions_charge', 'Charge', 'Affectations'];
+  // Tables jamais lues : la charge vécue au niveau Pilotage (réponses individuelles) ; charge, tension et affectations sur une page publique.
   function tableLue(t) {
     if (t === 'Charge') return !PUBLIC && !pilotage() && C.charge === true;
-    if (t === 'Tensions_charge') return !PUBLIC;
+    if (t === 'Tensions_charge' || t === 'Affectations') return !PUBLIC;
     return true;
   }
 
@@ -244,9 +244,12 @@
   }
 
   function chargerGrist() {
-    return Promise.all([grist.docApi.fetchTable('_grist_Tables'), grist.docApi.fetchTable('_grist_Tables_column')]).then(function (m) {
+    return Promise.all([grist.docApi.fetchTable('_grist_Tables'), grist.docApi.fetchTable('_grist_Tables_column'),
+      grist.docApi.fetchTable('_grist_ACLResources').catch(function () { return { id: [] }; })]).then(function (m) {
       meta.tables = enLignes(m[0]).filter(function (t) { return !/^_grist/.test(t.tableId); });
       meta.colonnes = enLignes(m[1]);
+      // Grist ne transmet les règles d'accès qu'aux personnes qui ont tous les droits (propriétaires, ou document sans règles).
+      etat.aclLisible = (m[2].id || []).length > 0;
       var c = colonnesDe('Meteo').filter(function (x) { return x.colId === NOM_COLONNE_CONFIG; })[0];
       meta.colConfig = !!c;
       var r = {};
@@ -308,10 +311,35 @@
       etat.alerte = message ? { type: 'success', texte: message } : null;
       return DEMO ? null : charger();
     }).then(rendre).catch(function (err) {
-      etat.alerte = { type: 'error', texte: 'Enregistrement refusé par Grist. Vérifiez vos droits sur le document. (' + ((err && err.message) || err) + ')' };
+      // Refus d'une règle d'accès : Grist transmet le message de la règle (memo), plus parlant que le détail technique.
+      var memos = ((err && err.details && err.details.memos) || []).map(function (m) { return typeof m === 'string' ? m : (m && m.text) || ''; })
+        .filter(function (m, i, l) { return m && l.indexOf(m) === i; });
+      var msg = String((err && err.message) || err);
+      etat.alerte = { type: 'error', texte: memos.length ? 'Enregistrement refusé : ' + memos.join(' ') :
+        /access rules/i.test(msg) ? 'Enregistrement refusé par les règles d\'accès du document : vos équipes ou votre rôle (table Affectations) ne le permettent pas.' :
+        'Enregistrement refusé par Grist. Vérifiez vos droits sur le document. (' + msg + ')' };
       rendre();
     });
   }
+
+  // Ce que la personne connectée peut publier (priorités, tension de charge). Les règles d'accès cachent à chacun les équipes
+  // des autres lignes de la table Affectations : seule sa propre ligne arrive en clair. Pour un propriétaire, ou sans règles,
+  // rien n'est restreint ici ; Grist reste seul juge et refuse ce que les règles interdisent.
+  function valeurCensuree(v) { return Array.isArray(v) && v[0] === 'C'; }
+  function liste(v) { return Array.isArray(v) ? (v[0] === 'L' ? v.slice(1) : v) : (v ? [v] : []); }
+  function mesDroits() {
+    if (DEMO || PUBLIC || etat.aclLisible || !aTable(AFFECT)) return null;
+    var l = data[AFFECT] || [];
+    if (!l.some(function (x) { return valeurCensuree(x.Manager_de); })) return null;
+    var moi = l.filter(function (x) { return !valeurCensuree(x.Manager_de); })[0];
+    return { equipes: liste(moi && moi.Equipes), managerDe: liste(moi && moi.Manager_de) };
+  }
+  function peutPublier(equipe) {
+    var d = mesDroits();
+    if (!d) return true;
+    return d.managerDe.indexOf(nomPilote()) >= 0 || (!!equipe && d.managerDe.indexOf(equipe) >= 0);
+  }
+  var RESERVE_MANAGER = '<p class="fr-text--xs fr-mt-2w mg-gris">Publication réservée aux managers de l\'équipe (table Affectations, colonne « Manager de »).</p>';
 
   // ---------------------------------------------------------------------------
   // Données métier
@@ -522,8 +550,9 @@
         return '<li class="mg-priorite' + (chaud ? ' mg-priorite--chaud' : '') + '"><p class="mg-priorite__titre">' + badge(p.Type || TYPES_PRIORITE[1], chaud ? 'warning' : 'info') + ' ' + esc(p.Titre) + '</p>' +
           (p.Detail ? '<p class="mg-priorite__detail">' + esc(p.Detail) + '</p>' : '') +
           '<p class="mg-action__meta">' + (p.Fin ? 'Jusqu\'au ' + esc(dateTexte(p.Fin)) : 'Sans date de fin') + (p.Publie_par ? ' · publié par ' + esc(p.Publie_par) : '') + (pilotage() && p.Equipe ? ' · ' + esc(p.Equipe) : '') + '</p>' +
-          '<ul class="fr-btns-group fr-btns-group--inline fr-btns-group--sm mg-saisie"><li><button type="button" class="fr-btn fr-btn--tertiary" data-priorite="' + p.id + '">Retirer</button></li></ul></li>';
+          (peutPublier(p.Equipe) ? '<ul class="fr-btns-group fr-btns-group--inline fr-btns-group--sm mg-saisie"><li><button type="button" class="fr-btn fr-btn--tertiary" data-priorite="' + p.id + '">Retirer</button></li></ul>' : '') + '</li>';
       }).join('') + '</ul>';
+    if (!peutPublier(vue.equipe)) return h + RESERVE_MANAGER;
     h += '<details class="mg-saisie fr-mt-2w"><summary>Publier une priorité ou un point chaud</summary><form data-form="priorite" class="fr-mt-2w">' +
       '<div class="mg-deux"><div class="fr-select-group"><label class="fr-label" for="pr-type">Type</label><select class="fr-select" id="pr-type" data-prio="Type">' +
       TYPES_PRIORITE.map(function (t) { return '<option' + ((b.Type || TYPES_PRIORITE[1]) === t ? ' selected' : '') + '>' + esc(t) + '</option>'; }).join('') + '</select></div>' +
@@ -559,6 +588,7 @@
       sems.map(function (x) { return '<th scope="col">' + esc(dateTexte(x, { day: 'numeric', month: 'short' })) + '</th>'; }).join('') + '</tr></thead><tbody>' +
       NIVEAUX_CHARGE.map(function (nv) { return '<tr><th scope="row">' + esc(nv.nom) + '</th>' + sems.map(function (x) { return '<td>' + chargeSemaine(x).filter(function (c) { return c.Niveau === nv.nom; }).length + '</td>'; }).join('') + '</tr>'; }).join('') +
       '</tbody></table></div></details>';
+    if ((C.equipes || []).length && !vue.equipe) return h + '<p class="fr-text--xs fr-mt-2w mg-gris">Pour répondre, ouvrez la vue de votre équipe : cette vue montre toutes les équipes.</p>';
     h += '<details class="mg-saisie fr-mt-2w"><summary>Donner ma charge de la semaine</summary><form data-form="charge" class="fr-mt-2w">' +
       '<fieldset class="fr-fieldset"><legend class="fr-fieldset__legend">Comment vivez-vous votre charge cette semaine ?</legend>' +
       NIVEAUX_CHARGE.map(function (nv, k) { return '<div class="fr-fieldset__element fr-fieldset__element--inline"><div class="fr-radio-group fr-radio-group--sm"><input type="radio" id="ch-' + k + '" name="ch-niveau" value="' + esc(nv.nom) + '"' + (b.Niveau === nv.nom ? ' checked' : '') + '><label class="fr-label" for="ch-' + k + '">' + esc(nv.nom) + '</label></div></div>'; }).join('') +
@@ -575,8 +605,10 @@
     var h = t ? '<p class="mg-tension"><span class="mg-pastille mg-statut--' + nv.code + '" aria-hidden="true">' + nv.symbole + '</span> <strong>Tension ' + esc(String(t.Tension).toLowerCase()) + '</strong> cette semaine' + (t.Commentaire ? ' : ' + esc(t.Commentaire) : '') + '</p>' +
       '<p class="mg-action__meta">' + (t.Qualifie_par ? 'Qualifiée par ' + esc(t.Qualifie_par) : '') + '</p>' :
       '<p class="mg-vide">Tension de la semaine pas encore qualifiée.</p>';
-    h += '<p class="fr-text--sm">C\'est ce que reçoit le niveau Pilotage : une appréciation de l\'équipe, jamais les réponses des agents.</p>' +
-      '<details class="mg-saisie fr-mt-2w"><summary>Qualifier la tension de la semaine</summary><form data-form="tension" class="fr-mt-2w"><fieldset class="fr-fieldset"><legend class="fr-fieldset__legend">Tension de charge de l\'équipe' + (vue.equipe ? ' ' + esc(vue.equipe) : '') + '</legend>' +
+    h += '<p class="fr-text--sm">C\'est ce que reçoit le niveau Pilotage : une appréciation de l\'équipe, jamais les réponses des agents.</p>';
+    if (!vue.equipe) return h + '<p class="fr-text--xs fr-mt-2w mg-gris">Pour qualifier la tension, choisissez l\'équipe de cette vue (Réglages › Général, Deux niveaux).</p>';
+    if (!peutPublier(vue.equipe)) return h + RESERVE_MANAGER.replace('Publication réservée', 'Qualification réservée');
+    h += '<details class="mg-saisie fr-mt-2w"><summary>Qualifier la tension de la semaine</summary><form data-form="tension" class="fr-mt-2w"><fieldset class="fr-fieldset"><legend class="fr-fieldset__legend">Tension de charge de l\'équipe' + (vue.equipe ? ' ' + esc(vue.equipe) : '') + '</legend>' +
       NIVEAUX_TENSION.map(function (n, k) { return '<div class="fr-fieldset__element fr-fieldset__element--inline"><div class="fr-radio-group fr-radio-group--sm"><input type="radio" id="te-' + k + '" name="te-niveau" value="' + esc(n.nom) + '"' + (t && t.Tension === n.nom ? ' checked' : '') + '><label class="fr-label" for="te-' + k + '">' + esc(n.nom) + '</label></div></div>'; }).join('') +
       '</fieldset><div class="fr-input-group"><label class="fr-label" for="te-com">Commentaire pour le pilotage (facultatif)</label><input class="fr-input" id="te-com" maxlength="200" value="' + esc(t ? t.Commentaire || '' : '') + '"></div>' +
       '<button type="submit" class="fr-btn">Enregistrer</button></form></details>';
@@ -730,7 +762,7 @@
 
   function vueInstallation() {
     return '<h1 class="fr-h3">Installer l\'espace de management visuel</h1>' + blocAlerte() +
-      '<p>Le widget va créer quatre tables dans ce document : <code>Meteo</code> (la météo du jour par rubrique, facultative), <code>Signalements</code> (les problèmes, les demandes d\'arbitrage et leur escalade), <code>Priorites</code> (priorités et points chauds) et <code>Tensions_charge</code> (la tension de charge de chaque équipe, pour le pilotage).' +
+      '<p>Le widget va créer cinq tables dans ce document : <code>Meteo</code> (la météo du jour par rubrique, facultative), <code>Signalements</code> (les problèmes, les demandes d\'arbitrage et leur escalade), <code>Priorites</code> (priorités et points chauds), <code>Tensions_charge</code> (la tension de charge de chaque équipe, pour le pilotage) et <code>Affectations</code> (les équipes de chaque personne et les managers, pour les règles d\'accès).' +
       (aTable('Meteo') || aTable('Signalements') ? ' La table déjà présente est gardée : le widget lui ajoute seulement les colonnes qui lui manquent, rien n\'est renommé ni supprimé.</p><p class="fr-text--sm">' + CONSEIL_RENOMMER + '</p>' : ' Les tables existantes ne sont pas modifiées.</p>') +
       '<p>Il affichera aussi, s\'ils sont dans ce document, les tableaux de bord de <strong>grist-graphique</strong>, les réunions et actions de <strong>grist-reunion</strong> et les projets de <strong>grist-projet</strong>.</p>' +
       '<fieldset class="fr-fieldset"><legend class="fr-fieldset__legend">Niveau de cette vue</legend>' +
@@ -780,29 +812,54 @@
   function actionsDeuxNiveaux(avecCharge) {
     var sch = schemaDeuxNiveaux(), a = [];
     Object.keys(sch.tables).forEach(function (t) {
-      if (!aTable(t)) a.push(['AddTable', t, sch.tables[t].map(function (c) { return Object.assign({ id: c[0] }, c[1]); })]);
+      if (!aTable(t)) a.push(['AddTable', t, sch.tables[t].map(function (c) { return Object.assign({ id: c[0] }, donnee(c[1])); })]);
       else sch.tables[t].forEach(function (c) { if (!aColonne(t, c[0])) a.push(['AddColumn', t, c[0], donnee(c[1])]); });
     });
     sch.colonnes.forEach(function (c) { if (aTable(c[0]) && !aColonne(c[0], c[1])) a.push(['AddColumn', c[0], c[1], donnee(c[2])]); });
     if (avecCharge) {
-      if (!aTable('Charge')) a.push(['AddTable', 'Charge', schemaCharge().map(function (c) { return Object.assign({ id: c[0] }, c[1]); })]);
+      if (!aTable('Charge')) a.push(['AddTable', 'Charge', schemaCharge().map(function (c) { return Object.assign({ id: c[0] }, donnee(c[1])); })]);
       if (!aColonne('Charge', 'Retenue')) a.push(['AddColumn', 'Charge', 'Retenue', { type: 'Bool', isFormula: true, formula: FORMULE_RETENUE }]);
     }
     return a;
   }
   function deuxNiveauxPrets() { return aTable('Priorites') && aTable('Tensions_charge') && aColonne('Signalements', 'Equipe') && aColonne('Signalements', 'Nature'); }
-  // Affectation des personnes aux équipes, pour les règles par équipe : colonne Equipe de la table partagée Personnes.
-  function actionsPersonnes() {
-    var eq = choix(equipesChoix().concat([C.nomPilotage || DEFAUTS.nomPilotage])), a = [];
-    if (!aTable('Personnes')) a.push(['AddTable', 'Personnes', [{ id: 'Nom', type: 'Text' }, { id: 'Email', type: 'Text' }, Object.assign({ id: 'Equipe' }, eq)]]);
-    else {
-      if (!aColonne('Personnes', 'Email')) a.push(['AddColumn', 'Personnes', 'Email', donnee({ type: 'Text' })]);
-      if (!aColonne('Personnes', 'Equipe')) a.push(['AddColumn', 'Personnes', 'Equipe', donnee(eq)]);
-    }
+  // Affectation des personnes aux équipes : table Affectations, tenue par les propriétaires du document seulement
+  // (une personne ne peut pas s'ajouter à une équipe ni se déclarer manager). Une ligne par personne :
+  // ses équipes (plusieurs possibles, dont l'équipe des managers) et les équipes dont elle est manager.
+  var AFFECT = 'Affectations';
+  function nomPilote() { return C.nomPilotage || DEFAUTS.nomPilotage; }
+  function choixAffectation() { return { type: 'ChoiceList', widgetOptions: JSON.stringify({ choices: equipesChoix().concat([nomPilote()]) }) }; }
+  function schemaAffectations() {
+    return [['Email', { type: 'Text' }], ['Nom', { type: 'Text' }], ['Equipes', choixAffectation()], ['Manager_de', choixAffectation()]];
+  }
+  function affectationsPretes() { return aTable(AFFECT) && schemaAffectations().every(function (c) { return aColonne(AFFECT, c[0]); }); }
+  function actionsAffectations() {
+    var a = [];
+    if (!aTable(AFFECT)) a.push(['AddTable', AFFECT, schemaAffectations().map(function (c) { return Object.assign({ id: c[0] }, donnee(c[1])); })]);
+    else schemaAffectations().forEach(function (c) { if (!aColonne(AFFECT, c[0])) a.push(['AddColumn', AFFECT, c[0], donnee(c[1])]); });
     return a;
   }
+  // Documents préparés avec la version précédente (colonne Equipe de Personnes) : reprise des équipes dans Affectations.
+  function aReprendre() {
+    if (!aColonne('Personnes', 'Email') || !aColonne('Personnes', 'Equipe')) return [];
+    var deja = (data[AFFECT] || []).map(function (x) { return String(x.Email || '').trim().toLowerCase(); });
+    return (data.Personnes || []).filter(function (p) {
+      var m = String(p.Email || '').trim().toLowerCase();
+      return m && typeof p.Equipe === 'string' && p.Equipe && deja.indexOf(m) < 0;
+    });
+  }
+  function actionsReprise() {
+    var l = aReprendre();
+    if (!l.length) return [];
+    return [['BulkAddRecord', AFFECT, l.map(function () { return null; }), {
+      Email: l.map(function (p) { return String(p.Email).trim(); }), Nom: l.map(function (p) { return p.Nom || ''; }),
+      Equipes: l.map(function (p) { return ['L', p.Equipe]; }), Manager_de: l.map(function () { return null; }) }]];
+  }
   function preparerDeuxNiveaux(quoi) {
-    var a = quoi === 'personnes' ? actionsPersonnes() : actionsDeuxNiveaux(quoi === 'charge');
+    var a;
+    if (quoi === 'affectations') a = actionsAffectations();
+    else if (quoi === 'reprise') a = actionsReprise();
+    else a = actionsDeuxNiveaux(quoi === 'charge');
     if (!a.length) { if (configLab) configLab.message('info', 'Rien à ajouter.'); return; }
     grist.docApi.applyUserActions(a).then(function () { return charger(); }).then(function () {
       if (configLab) { configLab.message('success', a.length + ' ajout(s) dans le document. Rien n\'a été retiré.'); configLab.rafraichir('reglages'); }
@@ -851,7 +908,7 @@
   function installer(exemple) {
     var sch = schemaMg();
     var actions = Object.keys(sch).filter(function (t) { return !aTable(t); }).map(function (t) {
-      return ['AddTable', t, sch[t].map(function (c) { return Object.assign({ id: c[0] }, c[1]); })];
+      return ['AddTable', t, sch[t].map(function (c) { return Object.assign({ id: c[0] }, donnee(c[1])); })];
     });
     actions = actions.concat(actionsColonnesManquantes());
     var niveauVue = (document.querySelector('input[name="inst-niveau"]:checked') || {}).value || 'equipe';
@@ -862,7 +919,7 @@
         // Exemple fictif : deux équipes fictives et la météo visible, pour montrer l'outil complet.
         var cfg = exemple ? { equipes: ['Accueil', 'Gestion'] } : { meteo: false };
         if (exemple) C.equipes = cfg.equipes;
-        var a = actionsDeuxNiveaux(false);
+        var a = actionsDeuxNiveaux(false).concat(actionsAffectations());
         var colCfg = colonnesDe('Meteo').filter(function (x) { return x.colId === NOM_COLONNE_CONFIG; })[0];
         if (!colCfg) a.push(['AddColumn', 'Meteo', NOM_COLONNE_CONFIG, donnee({ type: 'Text', description: JSON.stringify(cfg) })]);
         else if (!colCfg.description) a.push(['ModifyColumn', 'Meteo', NOM_COLONNE_CONFIG, { description: JSON.stringify(cfg) }]);
@@ -873,8 +930,10 @@
       return fetch('exemples/demo.json').then(function (r) { return r.json(); }).then(function (j) {
         var auj = aujourdhui(), ex = [];
         var sch2 = schemaDeuxNiveaux().tables;
-        ['Meteo', 'Signalements', 'Priorites', 'Tensions_charge'].forEach(function (t) {
+        sch2[AFFECT] = schemaAffectations();
+        ['Meteo', 'Signalements', 'Priorites', 'Tensions_charge', AFFECT].forEach(function (t) {
           var lignes = j.tables[t] || [], cols = {};
+          if (!lignes.length) return;
           (sch[t] || sch2[t]).forEach(function (c) { if (c[0] !== NOM_COLONNE_CONFIG) cols[c[0]] = []; });
           if (t === 'Signalements') { cols.Equipe = []; cols.Nature = []; }
           lignes.forEach(function (l) {
@@ -885,6 +944,7 @@
               if (typeof v === 'string' && /^J[+-]\d+$/.test(v)) v = auj + 86400 * (+v.slice(1));
               else if (typeof v === 'string' && /^S-\d+$/.test(v)) v = lundi(auj) - 7 * 86400 * (+v.slice(2));
               if (k === 'Qualifie_le' && !v) v = Date.now() / 1000;
+              if ((k === 'Equipes' || k === 'Manager_de') && Array.isArray(v)) v = v.length ? ['L'].concat(v) : null;
               cols[k].push(v === undefined ? null : v);
             });
           });
@@ -921,36 +981,74 @@
   var LIENS = window.DonneesLab ? [DonneesLab.lienPersonne('Signalements', 'Responsable', 'relie la personne responsable du signalement à sa fiche'),
     DonneesLab.lienPersonne('Signalements', 'Signale_par', 'relie la personne qui a signalé à sa fiche'),
     DonneesLab.lienPersonne('Meteo', 'Saisi_par', 'relie la personne qui a saisi la météo à sa fiche')] : [];
-  PARTAGE.push(['Personnes', 'annuaire, suivi de projets', 'colonne Equipe ajoutée par l\'outil : affectation des personnes aux équipes, lue par les règles d\'accès']);
   var aclDonnees = null;
   function texteFormule(v) { return '"' + String(v).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"'; }
-  // Règles d'accès proposées. Charge vécue : l'auteur d'une réponse n'est lisible que par lui-même (et par les propriétaires),
-  // sauf s'il a choisi de donner son nom. Par équipe (si Personnes a Email et Equipe) : chaque personne ne lit que son équipe ;
-  // l'équipe des managers lit tout, sauf la charge vécue, et ne lit des signalements que ceux escaladés et les demandes d'arbitrage.
+  // Messages des règles posées par la version précédente (affectation dans Personnes) : reconnues pour être mises à jour.
+  var ANCIENS_MEMOS = ['La charge vécue d\'une équipe n\'est lue que par cette équipe', 'Ligne d\'une autre équipe',
+    'Le pilotage ne voit que ce que les équipes escaladent', 'Signalement d\'une autre équipe'];
+  // Règles d'accès proposées.
+  // Charge vécue : l'auteur d'une réponse n'est lisible que par lui-même (et par les propriétaires), sauf s'il a choisi de donner son nom.
+  // Par équipe, à partir de la table Affectations (tenue par les propriétaires) : chaque personne lit et modifie les lignes de ses équipes
+  // et les lignes sans équipe ; les membres de l'équipe des managers lisent les lignes de toutes les équipes (jamais la charge vécue),
+  // sans les modifier, et ne lisent des signalements des autres équipes que ceux escaladés et les demandes d'arbitrage.
+  // Priorités et tension de charge : publiées seulement par les managers de l'équipe (colonne Manager_de) ; une priorité sans équipe,
+  // vue par toutes les équipes, par les managers de l'équipe des managers.
   function reglesAcces() {
+    var NP = 'user.Access != OWNER';
     var r = [
-      { table: 'Charge', cols: 'Saisi_par,Nom', formule: 'user.Access != OWNER and rec.Saisi_par != user.Email and not rec.Nominatif', droits: '-R',
+      { table: 'Charge', cols: 'Saisi_par,Nom', formule: NP + ' and rec.Saisi_par != user.Email and not rec.Nominatif', droits: '-R',
         memo: 'L\'auteur d\'une réponse sur la charge n\'est pas visible', effet: 'l\'auteur d\'une réponse n\'est visible que par lui-même, sauf s\'il a choisi de montrer son nom (les propriétaires voient tout)' },
-      { table: 'Charge', cols: '*', formule: 'user.Access != OWNER and newRec.Saisi_par != user.Email', droits: '-CU',
+      { table: 'Charge', cols: '*', formule: NP + ' and newRec.Saisi_par != user.Email', droits: '-CU',
         memo: 'On ne répond sur la charge qu\'à son nom', effet: 'chacun ne répond qu\'à son nom' },
-      { table: 'Charge', cols: '*', formule: 'user.Access != OWNER and rec.Saisi_par != user.Email', droits: '-UD',
+      { table: 'Charge', cols: '*', formule: NP + ' and rec.Saisi_par != user.Email', droits: '-UD',
         memo: 'On ne modifie pas la réponse d\'une autre personne', effet: 'on ne modifie ni ne retire la réponse d\'une autre personne' }];
-    if (!aColonne('Personnes', 'Email') || !aColonne('Personnes', 'Equipe') || !deuxNiveauxPrets()) return r;
-    var P = texteFormule(C.nomPilotage || DEFAUTS.nomPilotage), E0 = texteFormule(C.escalade[0]), ARB = texteFormule(NATURES[1]);
-    var autreEquipe = 'user.Access != OWNER and user.Membre.Equipe != ' + P + ' and rec.Equipe and rec.Equipe != user.Membre.Equipe';
-    r.unshift({ attribut: { name: 'Membre', tableId: 'Personnes', lookupColId: 'Email', charId: 'Email' }, effet: 'la fiche de la personne connectée (table Personnes, par son adresse), qui donne son équipe' });
-    r.push({ table: 'Charge', cols: '*', formule: 'user.Access != OWNER and rec.Equipe != user.Membre.Equipe', droits: '-R',
-      memo: 'La charge vécue d\'une équipe n\'est lue que par cette équipe', effet: 'la charge vécue n\'est lue que par l\'équipe concernée, jamais par le pilotage' });
-    ['Meteo', 'Priorites', 'Tensions_charge'].forEach(function (t) {
-      r.push({ table: t, cols: '*', formule: autreEquipe, droits: '-RUD', memo: 'Ligne d\'une autre équipe', effet: 'chaque personne ne lit et ne modifie que les lignes de son équipe (et les lignes sans équipe) ; l\'équipe des managers lit tout' });
+    if (!affectationsPretes() || !deuxNiveauxPrets()) return r;
+    var P = texteFormule(nomPilote()), E0 = texteFormule(C.escalade[0]), ARB = texteFormule(NATURES[1]);
+    // Membre d'une équipe : elle figure dans ses équipes ou dans les équipes dont il est manager.
+    var EQ = 'user.Membre.Equipes', MD = 'user.Membre.Manager_de';
+    var dans = function (v) { return '(' + v + ' in ' + EQ + ' or ' + v + ' in ' + MD + ')'; };
+    var PIL = dans(P);
+    var hors = function (x) { return x + '.Equipe and not ' + dans(x + '.Equipe'); };
+    r.unshift({ attribut: { name: 'Membre', tableId: AFFECT, lookupColId: 'Email', charId: 'Email' }, effet: 'la ligne de la personne connectée dans la table Affectations (par son adresse, sans tenir compte des majuscules) : ses équipes et les équipes dont elle est manager' });
+    r.push({ table: AFFECT, cols: '*', formule: NP, droits: '-CUD', memo: 'Seuls les propriétaires du document affectent les personnes aux équipes',
+      effet: 'seuls les propriétaires ajoutent, modifient ou retirent une affectation : personne ne peut s\'ajouter à une équipe ni se déclarer manager' });
+    r.push({ table: AFFECT, cols: '*', formule: NP + ' and not user.Membre.Email', droits: '-R', memo: 'Les affectations ne sont visibles que par les personnes affectées',
+      effet: 'une personne sans affectation (et un visiteur d\'un document public) ne lit pas la table des affectations' });
+    r.push({ table: AFFECT, cols: 'Equipes,Manager_de', formule: NP + ' and not (rec.Email and user.Email and rec.Email.lower() == user.Email.lower())', droits: '-R',
+      memo: 'Les affectations des autres personnes ne sont pas visibles', effet: 'chaque personne ne voit que ses propres équipes et son rôle de manager' });
+    r.push({ table: 'Charge', cols: '*', formule: NP + ' and not ' + dans('rec.Equipe'), droits: '-RUD',
+      memo: 'La charge vécue n\'est lue que par l\'équipe concernée', effet: 'la charge vécue n\'est lue que par l\'équipe concernée, jamais par le pilotage' });
+    r.push({ table: 'Charge', cols: '*', formule: NP + ' and not ' + dans('newRec.Equipe'), droits: '-CU',
+      memo: 'On ne répond sur la charge que pour une de ses équipes', effet: 'on ne répond que pour une de ses équipes' });
+    ['Meteo', 'Priorites', 'Tensions_charge', 'Actions_reunion'].forEach(function (t) {
+      r.push({ table: t, cols: '*', formule: NP + ' and not ' + PIL + ' and ' + hors('rec'), droits: '-R', memo: 'Ligne d\'une équipe dont vous n\'êtes pas membre',
+        effet: 'chaque personne lit les lignes de ses équipes et les lignes sans équipe ; l\'équipe des managers lit tout' });
+      r.push({ table: t, cols: '*', formule: NP + ' and ' + hors('rec'), droits: '-UD', memo: 'On ne modifie pas les lignes d\'une autre équipe',
+        effet: 'personne ne modifie ni ne retire les lignes d\'une équipe dont il n\'est pas membre' });
+      r.push({ table: t, cols: '*', formule: NP + ' and ' + hors('newRec'), droits: '-CU', memo: 'On n\'écrit pas au nom d\'une autre équipe',
+        effet: 'personne n\'ajoute de ligne au nom d\'une équipe dont il n\'est pas membre' });
     });
-    r.push({ table: 'Signalements', cols: '*', formule: 'user.Access != OWNER and user.Membre.Equipe == ' + P + ' and (not rec.Escalade or rec.Escalade == ' + E0 + ') and rec.Nature != ' + ARB, droits: '-R',
-      memo: 'Le pilotage ne voit que ce que les équipes escaladent', effet: 'l\'équipe des managers ne lit que les signalements escaladés et les demandes d\'arbitrage' });
-    r.push({ table: 'Signalements', cols: '*', formule: autreEquipe, droits: '-RUD', memo: 'Signalement d\'une autre équipe', effet: 'chaque personne ne lit et ne modifie que les signalements de son équipe' });
+    ['Priorites', 'Tensions_charge'].forEach(function (t) {
+      var qui = function (x) { return '(' + x + '.Equipe in ' + MD + ' or (not ' + x + '.Equipe and ' + P + ' in ' + MD + '))'; };
+      var quoi = t === 'Priorites' ? 'Seuls les managers de l\'équipe publient ses priorités' : 'Seuls les managers de l\'équipe qualifient sa tension de charge';
+      r.push({ table: t, cols: '*', formule: NP + ' and not ' + qui('newRec'), droits: '-CU', memo: quoi,
+        effet: t === 'Priorites' ? 'seuls les managers de l\'équipe publient et modifient ses priorités (sans équipe : les managers de l\'équipe des managers)' : 'seuls les managers de l\'équipe qualifient sa tension de charge' });
+      r.push({ table: t, cols: '*', formule: NP + ' and not ' + qui('rec'), droits: '-D', memo: quoi, effet: 'seuls ces managers les retirent' });
+    });
+    r.push({ table: 'Signalements', cols: '*', formule: NP + ' and ' + PIL + ' and not ' + dans('rec.Equipe') + ' and (not rec.Escalade or rec.Escalade == ' + E0 + ') and rec.Nature != ' + ARB, droits: '-RU',
+      memo: 'Le pilotage ne voit que ce que les équipes escaladent', effet: 'l\'équipe des managers ne lit des autres équipes que les signalements escaladés et les demandes d\'arbitrage (et les traite)' });
+    r.push({ table: 'Signalements', cols: '*', formule: NP + ' and not ' + PIL + ' and ' + hors('rec'), droits: '-RUD', memo: 'Signalement d\'une équipe dont vous n\'êtes pas membre',
+      effet: 'chaque personne ne lit et ne modifie que les signalements de ses équipes (et ceux sans équipe)' });
+    r.push({ table: 'Signalements', cols: '*', formule: NP + ' and ' + PIL + ' and ' + hors('rec'), droits: '-D', memo: 'On ne retire pas le signalement d\'une autre équipe',
+      effet: 'l\'équipe des managers ne retire pas les signalements des équipes' });
+    r.push({ table: 'Signalements', cols: '*', formule: NP + ' and ' + hors('newRec') + ' and not ' + PIL, droits: '-CU', memo: 'On n\'écrit pas au nom d\'une autre équipe',
+      effet: 'personne ne signale au nom d\'une équipe dont il n\'est pas membre' });
+    r.push({ table: 'Signalements', cols: '*', formule: NP + ' and ' + PIL + ' and ' + hors('newRec'), droits: '-C', memo: 'On n\'écrit pas au nom d\'une autre équipe',
+      effet: 'l\'équipe des managers répond aux escalades sans créer de signalement au nom d\'une équipe' });
     return r;
   }
-  function optionsDonnees() { return { demo: DEMO, tables: ['Meteo', 'Signalements', 'Priorites', 'Tensions_charge', 'Charge'], partage: PARTAGE, regles: reglesAcces(), liens: LIENS,
-    noteRegles: 'Les règles par équipe s\'appuient sur la table <code>Personnes</code> (colonnes <code>Email</code> et <code>Equipe</code>) : renseignez l\'équipe de chaque personne avant de les installer (Réglages › Général, Deux niveaux). Une personne sans fiche ne lit que les lignes sans équipe. Les propriétaires du document gardent tous les droits : réservez ce rôle aux personnes qui administrent le document. Après installation, vérifiez avec <strong>Voir en tant que</strong>.' }; }
+  function optionsDonnees() { return { demo: DEMO, tables: ['Meteo', 'Signalements', 'Priorites', 'Tensions_charge', 'Charge', 'Actions_reunion', AFFECT], partage: PARTAGE, regles: reglesAcces(), anciens: ANCIENS_MEMOS, liens: LIENS,
+    noteRegles: 'Les règles par équipe s\'appuient sur la table <code>Affectations</code> (Réglages › Général, Deux niveaux) : une ligne par personne, avec son adresse, ses équipes et les équipes dont elle est manager. Renseignez-la avant d\'installer les règles. Une personne sans affectation ne lit que les lignes sans équipe. Les propriétaires du document gardent tous les droits : réservez ce rôle aux personnes qui administrent le document. Après installation, vérifiez avec <strong>Voir en tant que</strong>.' }; }
   function rendreDonnees(zone) {
     if (!window.DonneesLab) { zone.innerHTML = ''; return; }
     if (!DEMO && !aclDonnees) DonneesLab.lire().then(function (a) { aclDonnees = a; if (configLab) configLab.rafraichir('donnees'); });
@@ -962,7 +1060,7 @@
       if (!b || b.disabled) return;
       b.disabled = true;
       if (b.getAttribute('data-donnees') === 'regles') {
-        DonneesLab.installerRegles(aclDonnees, meta, reglesAcces()).then(function (n) {
+        DonneesLab.installerRegles(aclDonnees, meta, reglesAcces(), ANCIENS_MEMOS).then(function (n) {
           aclDonnees = null;
           if (configLab) { configLab.message('success', n + ' règle(s) d\'accès installée(s). Grist recharge le document.'); configLab.rafraichir('donnees'); }
         }).catch(function (err) {
@@ -1042,10 +1140,15 @@
       '<div class="fr-alert fr-alert--warning fr-alert--sm fr-mb-2w"><p>Avant de l\'activer, demandez l\'avis de votre délégué à la protection des données et présentez l\'outil à l\'équipe. Chaque agent dit si sa charge est confortable, chargée ou débordante, avec une raison facultative. L\'équipe voit la répartition, sans les noms, sauf si l\'agent choisit de montrer le sien. Les propriétaires du document peuvent voir qui a répondu. Le niveau Pilotage ne lit jamais ces réponses.</p></div>' +
       '<div class="fr-checkbox-group fr-checkbox-group--sm"><input type="checkbox" id="rg-charge" data-r="charge" data-r-type="case"' + (b.charge === true ? ' checked' : '') + '><label class="fr-label" for="rg-charge">Recueillir la charge vécue des agents<span class="fr-hint-text">La table Charge est créée à l\'enregistrement. Décocher masque la zone ; les réponses sont gardées.</span></label></div>' +
       '<div class="mg-deux">' + nombreR('semainesCharge', 'Semaines montrées dans la tendance', b.semainesCharge || DEFAUTS.semainesCharge) +
-      '<div class="fr-input-group"><label class="fr-label" for="rg-pil">Nom de l\'équipe des managers<span class="fr-hint-text">Valeur de la colonne Personnes.Equipe qui donne la vue de toutes les équipes dans les règles d\'accès.</span></label><input class="fr-input" id="rg-pil" data-r="nomPilotage" value="' + esc(b.nomPilotage || DEFAUTS.nomPilotage) + '"></div></div>';
-    if (!DEMO && (!aColonne('Personnes', 'Equipe') || !aColonne('Personnes', 'Email'))) {
-      h += '<h3 class="fr-h6">Affectation des personnes</h3><p class="fr-text--sm">Pour que chaque agent ne voie que son équipe, les règles d\'accès s\'appuient sur la table partagée <code>Personnes</code> : adresse (<code>Email</code>) et équipe (<code>Equipe</code>) de chaque personne. Rien n\'est retiré ; la table est créée si elle manque.</p>' +
-        '<button type="button" class="fr-btn fr-btn--sm fr-btn--secondary" data-deux-niveaux="personnes">Préparer l\'affectation des équipes</button>';
+      '<div class="fr-input-group"><label class="fr-label" for="rg-pil">Nom de l\'équipe des managers<span class="fr-hint-text">Ajoutée aux choix des colonnes Equipes et Manager de des affectations. Ses membres lisent toutes les équipes (sauf la charge vécue) et ne reçoivent des signalements que ce qui est escaladé.</span></label><input class="fr-input" id="rg-pil" data-r="nomPilotage" value="' + esc(b.nomPilotage || DEFAUTS.nomPilotage) + '"></div></div>';
+    h += '<h3 class="fr-h6">Affectation des personnes</h3><p class="fr-text--sm">Les règles d\'accès s\'appuient sur la table <code>Affectations</code>, que seuls les propriétaires du document peuvent modifier : une ligne par personne, avec son adresse (<code>Email</code>, celle de son compte Grist), ses équipes (<code>Equipes</code>, plusieurs possibles, dont l\'équipe des managers) et les équipes dont elle est manager (<code>Manager_de</code>). Seuls les managers d\'une équipe publient ses priorités et qualifient sa tension de charge.</p>';
+    if (!DEMO && !affectationsPretes()) {
+      h += '<button type="button" class="fr-btn fr-btn--sm fr-btn--secondary" data-deux-niveaux="affectations">' + (aTable(AFFECT) ? 'Compléter la table Affectations' : 'Créer la table Affectations') + '</button>';
+    } else if (!DEMO) {
+      var n = (data[AFFECT] || []).length, rep = aReprendre().length;
+      h += '<p class="fr-text--sm">' + n + ' personne' + (n > 1 ? 's' : '') + ' affectée' + (n > 1 ? 's' : '') + '. Renseignez les affectations dans la table <code>Affectations</code> (page de données brutes), puis installez les règles (Réglages › Données).</p>';
+      if (rep) h += '<p class="fr-text--sm">La table <code>Personnes</code> porte l\'équipe de ' + rep + ' personne' + (rep > 1 ? 's' : '') + ' absente' + (rep > 1 ? 's' : '') + ' des affectations (version précédente de l\'outil).</p>' +
+        '<button type="button" class="fr-btn fr-btn--sm fr-btn--secondary" data-deux-niveaux="reprise">Reprendre ces équipes dans Affectations</button>';
     }
     return h + '</section>';
   }
@@ -1120,8 +1223,8 @@
     var eqs = b.equipes || [];
     [['Meteo', 'Rubrique', b.rubriques || DEFAUTS.rubriques], ['Signalements', 'Rubrique', b.rubriques || DEFAUTS.rubriques], ['Signalements', 'Escalade', b.escalade || DEFAUTS.escalade],
       ['Signalements', 'Equipe', eqs], ['Meteo', 'Equipe', eqs], ['Priorites', 'Equipe', eqs], ['Tensions_charge', 'Equipe', eqs], ['Charge', 'Equipe', eqs], ['Actions_reunion', 'Equipe', eqs],
-      ['Personnes', 'Equipe', eqs.concat([b.nomPilotage || DEFAUTS.nomPilotage])]].forEach(function (x) {
-      if (x[1] === 'Equipe' && !eqs.length) return;
+      [AFFECT, 'Equipes', eqs.concat([b.nomPilotage || DEFAUTS.nomPilotage])], [AFFECT, 'Manager_de', eqs.concat([b.nomPilotage || DEFAUTS.nomPilotage])]].forEach(function (x) {
+      if (/^Equipe/.test(x[1]) && !eqs.length) return;
       var col = colonnesDe(x[0]).filter(function (c) { return c.colId === x[1]; })[0];
       if (!col) return;
       var o = {}; try { o = JSON.parse(col.widgetOptions || '{}'); } catch (e) { o = {}; }
