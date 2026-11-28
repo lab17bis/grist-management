@@ -727,7 +727,7 @@
 
   function vueInstallation() {
     return '<h1 class="fr-h3">Installer l\'espace de management visuel</h1>' + blocAlerte() +
-      '<p>Le widget va créer deux tables dans ce document : <code>Meteo</code> (la météo du jour par rubrique) et <code>Signalements</code> (les problèmes et leur escalade).' +
+      '<p>Le widget va créer quatre tables dans ce document : <code>Meteo</code> (la météo du jour par rubrique, facultative), <code>Signalements</code> (les problèmes, les demandes d\'arbitrage et leur escalade), <code>Priorites</code> (priorités et points chauds) et <code>Tensions_charge</code> (la tension de charge de chaque équipe, pour le pilotage).' +
       (aTable('Meteo') || aTable('Signalements') ? ' La table déjà présente est gardée : le widget lui ajoute seulement les colonnes qui lui manquent, rien n\'est renommé ni supprimé.</p><p class="fr-text--sm">' + CONSEIL_RENOMMER + '</p>' : ' Les tables existantes ne sont pas modifiées.</p>') +
       '<p>Il affichera aussi, s\'ils sont dans ce document, les tableaux de bord de <strong>grist-graphique</strong>, les réunions et actions de <strong>grist-reunion</strong> et les projets de <strong>grist-projet</strong>.</p>' +
       '<fieldset class="fr-fieldset"><legend class="fr-fieldset__legend">Niveau de cette vue</legend>' +
@@ -739,6 +739,8 @@
   }
 
   function choix(l) { return { type: 'Choice', widgetOptions: JSON.stringify({ choices: l }) }; }
+  // AddColumn crée par défaut une colonne de formule vide : les colonnes de saisie sont déclarées comme données.
+  function donnee(def) { return Object.assign({ isFormula: false }, def); }
   function schemaMg() {
     return {
       Meteo: [['Date', { type: 'Date' }], ['Rubrique', choix(C.rubriques)], ['Statut', { type: 'Choice', widgetOptions: JSON.stringify({ choices: STATUTS_METEO.map(function (s) { return s.nom; }), choiceOptions: COULEURS_GRIST }) }],
@@ -776,9 +778,9 @@
     var sch = schemaDeuxNiveaux(), a = [];
     Object.keys(sch.tables).forEach(function (t) {
       if (!aTable(t)) a.push(['AddTable', t, sch.tables[t].map(function (c) { return Object.assign({ id: c[0] }, c[1]); })]);
-      else sch.tables[t].forEach(function (c) { if (!aColonne(t, c[0])) a.push(['AddColumn', t, c[0], Object.assign({}, c[1])]); });
+      else sch.tables[t].forEach(function (c) { if (!aColonne(t, c[0])) a.push(['AddColumn', t, c[0], donnee(c[1])]); });
     });
-    sch.colonnes.forEach(function (c) { if (aTable(c[0]) && !aColonne(c[0], c[1])) a.push(['AddColumn', c[0], c[1], Object.assign({}, c[2])]); });
+    sch.colonnes.forEach(function (c) { if (aTable(c[0]) && !aColonne(c[0], c[1])) a.push(['AddColumn', c[0], c[1], donnee(c[2])]); });
     if (avecCharge) {
       if (!aTable('Charge')) a.push(['AddTable', 'Charge', schemaCharge().map(function (c) { return Object.assign({ id: c[0] }, c[1]); })]);
       if (!aColonne('Charge', 'Retenue')) a.push(['AddColumn', 'Charge', 'Retenue', { type: 'Bool', isFormula: true, formula: FORMULE_RETENUE }]);
@@ -791,8 +793,8 @@
     var eq = choix(equipesChoix().concat([C.nomPilotage || DEFAUTS.nomPilotage])), a = [];
     if (!aTable('Personnes')) a.push(['AddTable', 'Personnes', [{ id: 'Nom', type: 'Text' }, { id: 'Email', type: 'Text' }, Object.assign({ id: 'Equipe' }, eq)]]);
     else {
-      if (!aColonne('Personnes', 'Email')) a.push(['AddColumn', 'Personnes', 'Email', { type: 'Text' }]);
-      if (!aColonne('Personnes', 'Equipe')) a.push(['AddColumn', 'Personnes', 'Equipe', eq]);
+      if (!aColonne('Personnes', 'Email')) a.push(['AddColumn', 'Personnes', 'Email', donnee({ type: 'Text' })]);
+      if (!aColonne('Personnes', 'Equipe')) a.push(['AddColumn', 'Personnes', 'Equipe', donnee(eq)]);
     }
     return a;
   }
@@ -830,7 +832,7 @@
       '<button type="button" class="fr-btn fr-btn--sm" data-action="completer-colonnes">Ajouter les colonnes manquantes</button></div>';
   }
   function actionsColonnesManquantes() {
-    return colonnesManquantes().map(function (c) { return ['AddColumn', c.table, c.id, Object.assign({}, c.def)]; });
+    return colonnesManquantes().map(function (c) { return ['AddColumn', c.table, c.id, donnee(c.def)]; });
   }
   function completerColonnes() {
     var a = actionsColonnesManquantes();
@@ -859,7 +861,7 @@
         if (exemple) C.equipes = cfg.equipes;
         var a = actionsDeuxNiveaux(false);
         var colCfg = colonnesDe('Meteo').filter(function (x) { return x.colId === NOM_COLONNE_CONFIG; })[0];
-        if (!colCfg) a.push(['AddColumn', 'Meteo', NOM_COLONNE_CONFIG, { type: 'Text', description: JSON.stringify(cfg) }]);
+        if (!colCfg) a.push(['AddColumn', 'Meteo', NOM_COLONNE_CONFIG, donnee({ type: 'Text', description: JSON.stringify(cfg) })]);
         else if (!colCfg.description) a.push(['ModifyColumn', 'Meteo', NOM_COLONNE_CONFIG, { description: JSON.stringify(cfg) }]);
         return grist.docApi.applyUserActions(a);
       }).then(function () { return choisirVue(niveauVue, ''); });
@@ -1108,7 +1110,7 @@
     if (!b.rubriques.length) delete b.rubriques;
     if (!b.escalade.length) delete b.escalade;
     var actions = [];
-    if (!meta.colConfig) actions.push(['AddColumn', 'Meteo', NOM_COLONNE_CONFIG, { type: 'Text' }]);
+    if (!meta.colConfig) actions.push(['AddColumn', 'Meteo', NOM_COLONNE_CONFIG, donnee({ type: 'Text' })]);
     actions.push(['ModifyColumn', 'Meteo', NOM_COLONNE_CONFIG, { description: JSON.stringify(versReglages(b)) }]);
     if (b.charge === true && !aTable('Charge')) { C.equipes = b.equipes || []; actions = actions.concat(actionsDeuxNiveaux(true)); }
     var eqs = b.equipes || [];

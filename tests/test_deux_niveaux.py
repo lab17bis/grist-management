@@ -59,6 +59,7 @@ with sync_playwright() as p:
     f.get_by_role('button', name='Ajouter les tables et colonnes des deux niveaux').click(); pg.wait_for_timeout(1500)
     t = doc(pg)['tables']
     verifier('ajout : tables et colonnes des deux niveaux', 'Priorites' in t and 'Tensions_charge' in t and 'Equipe' in t['Signalements']['colonnes'] and 'Equipe' in t['Meteo']['colonnes'])
+    verifier('ajout : colonnes de saisie, pas de formule vide', t['Meteo']['colonnes']['Equipe'].get('isFormula') is False and t['Signalements']['colonnes']['Nature'].get('isFormula') is False)
     verifier('ajout : données gardées', t['Signalements']['lignes'][0]['Titre'] == 'Ancien signalement')
     f.locator('#rg-eq').fill('Accueil\nGestion')
     f.locator('label[for="rg-charge"]').click()

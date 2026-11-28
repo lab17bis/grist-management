@@ -14,6 +14,8 @@ Les adresses `/v1/` ne changent pas : chaque version ajoute ou corrige, sans ret
 - Page publique : jamais de charge vécue ni de tension de charge, même si un écran les contient ; ces tables ne sont pas lues.
 - Correction : les cases à cocher de premier niveau des réglages (*Afficher le samedi et le dimanche*) provoquaient une erreur et n'étaient pas prises en compte.
 - Après l'installation ou l'enregistrement, les réglages se mettent à jour (équipes proposées, tables à ajouter).
+- Les colonnes ajoutées à une table existante sont des colonnes de saisie (et non des colonnes de formule vides, comportement par défaut de Grist).
+- Écran d'installation : il annonce les quatre tables créées.
 - Démonstration : deux équipes fictives, priorités, charge et tension ; `?niveau=pilotage` pour voir le niveau Pilotage.
 
 ## 2026-11-28 (statut de l'éditeur)
